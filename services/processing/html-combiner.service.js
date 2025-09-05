@@ -71,9 +71,48 @@ class HTMLCombinerService extends BaseService {
         });
       }
       
+      // First, find all image references in HTML
+      const imageReferences = this.findImageReferencesInHTML(combinedHTML);
+      this.logOperation('Found image references in HTML', {
+        references: imageReferences,
+        count: imageReferences.length
+      });
+      
       // Replace image references with base64 data URLs
-      for (const [originalSrc, imageInfo] of imageMap.entries()) {
+      for (const imageRef of imageReferences) {
+        let imageInfo = imageMap.get(imageRef);
+        
+        // If not found, try fallback mappings
+        if (!imageInfo) {
+          for (const [src, info] of imageMap.entries()) {
+            if (this.isImageMatch(imageRef, src)) {
+              imageInfo = info;
+              this.logOperation('Using fallback mapping', {
+                requestedSrc: imageRef,
+                foundSrc: src,
+                filename: info.filename
+              });
+              break;
+            }
+          }
+        }
+        
+        if (!imageInfo) {
+          this.logOperation('Warning: Image not found for reference', {
+            reference: imageRef,
+            availableImages: Array.from(imageMap.keys())
+          });
+          embeddingResults.push({
+            filename: imageRef,
+            originalSrc: imageRef,
+            embedded: false,
+            error: 'Image file not found'
+          });
+          continue;
+        }
+        
         try {
+          const originalSrc = imageRef;
           // Check individual image size
           const originalImageSize = await this.getFileSize(imageInfo.filepath);
           
@@ -197,6 +236,15 @@ class HTMLCombinerService extends BaseService {
   createImageMap(generatedImages) {
     const imageMap = new Map();
     
+    // Create fallback mappings for common naming mismatches
+    const fallbackMappings = {
+      'icon-lock': 'icon-security',
+      'icon-verified': 'icon-shield', 
+      'icon-phone': 'icon-mobile',
+      'icon-wallet': 'icon-payment',
+      'icon-headset': 'icon-support'
+    };
+    
     generatedImages.forEach(imageInfo => {
       // Support both new format (originalSrc) and legacy format (originalRef.originalSrc)
       const originalSrc = imageInfo.originalSrc || (imageInfo.originalRef && imageInfo.originalRef.originalSrc);
@@ -207,6 +255,24 @@ class HTMLCombinerService extends BaseService {
           originalSrc,
           filename: imageInfo.filename,
           filepath: imageInfo.filepath
+        });
+        
+        // Add fallback mappings - check if this image can serve as a fallback for other names
+        const imageName = originalSrc.split('/').pop().split('.')[0]; // Extract base name
+        const baseImageName = imageName.split('-').slice(0, -2).join('-'); // Remove timestamp and ID
+        
+        Object.entries(fallbackMappings).forEach(([missingName, generatedName]) => {
+          if (baseImageName.includes(generatedName)) {
+            const fallbackSrc = originalSrc.replace(baseImageName, baseImageName.replace(generatedName, missingName));
+            if (!imageMap.has(fallbackSrc)) {
+              imageMap.set(fallbackSrc, imageInfo);
+              this.logOperation('Added fallback mapping', {
+                fallbackSrc,
+                actualSrc: originalSrc,
+                mapping: `${missingName} → ${generatedName}`
+              });
+            }
+          }
         });
       } else {
         this.logOperation('Warning: Image missing originalSrc reference', {
@@ -810,6 +876,86 @@ class HTMLCombinerService extends BaseService {
     } catch (error) {
       return false;
     }
+  }
+
+  /**
+   * Find all image references in HTML content
+   * @param {string} html - HTML content to scan
+   * @returns {string[]} Array of image src attributes
+   */
+  findImageReferencesInHTML(html) {
+    const imageRefs = [];
+    const imgRegex = /<img[^>]+src=["']([^"']+)["'][^>]*>/gi;
+    const cssUrlRegex = /url\(['"]?([^'")\s]+)['"]?\)/gi;
+    
+    let match;
+    
+    // Find img src attributes
+    while ((match = imgRegex.exec(html)) !== null) {
+      const src = match[1];
+      if (src.startsWith('assets/images/') && !imageRefs.includes(src)) {
+        imageRefs.push(src);
+      }
+    }
+    
+    // Find CSS url() references
+    html.replace(cssUrlRegex, (fullMatch, src) => {
+      if (src.startsWith('assets/images/') && !imageRefs.includes(src)) {
+        imageRefs.push(src);
+      }
+      return fullMatch;
+    });
+    
+    return imageRefs;
+  }
+
+  /**
+   * Check if an image reference matches an available image
+   * @param {string} requestedSrc - The image src requested in HTML
+   * @param {string} availableSrc - The image src available in the map
+   * @returns {boolean} Whether they match
+   */
+  isImageMatch(requestedSrc, availableSrc) {
+    // Direct match
+    if (requestedSrc === availableSrc) {
+      return true;
+    }
+    
+    // Extract base names (without extension and path)
+    const getBaseName = (src) => {
+      return src.split('/').pop().split('.')[0];
+    };
+    
+    const requestedBase = getBaseName(requestedSrc);
+    const availableBase = getBaseName(availableSrc);
+    
+    // Check if the available image is a timestamped version of the requested one
+    // Example: icon-lock-Brand vs icon-security-Brand-1234567890-abcdef
+    const availableWithoutTimestamp = availableBase.replace(/-\d+-[a-z0-9]+$/, '');
+    
+    // Define common naming alternatives
+    const alternatives = {
+      'icon-lock': ['icon-security', 'icon-shield'],
+      'icon-verified': ['icon-shield', 'icon-security'],
+      'icon-phone': ['icon-mobile', 'icon-headset'],
+      'icon-wallet': ['icon-payment'],
+      'icon-headset': ['icon-support', 'icon-phone']
+    };
+    
+    // Check if requested name matches available name after removing timestamp
+    if (requestedBase === availableWithoutTimestamp) {
+      return true;
+    }
+    
+    // Check alternatives
+    const requestedType = requestedBase.split('-').slice(0, 2).join('-'); // e.g., "icon-lock"
+    const availableType = availableWithoutTimestamp.split('-').slice(0, 2).join('-'); // e.g., "icon-security"
+    
+    if (alternatives[requestedType] && alternatives[requestedType].includes(availableType)) {
+      return true;
+    }
+    
+    return false;
   }
 }
 
