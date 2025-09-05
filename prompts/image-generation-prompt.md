@@ -189,11 +189,11 @@ Instead of fixed colors, choose from these professional combinations:
 
 ## File Naming Convention
 
-- Hero backgrounds: `hero-bg-{keyword}-{domain}.jpg`
-- Feature icons: `icon-{feature-name}-{domain}.png`
-- Campaign images: `campaign-{campaign-type}-{domain}.jpg`
-- FAQ graphics: `faq-support-{domain}.png`
-- Contact images: `contact-support-{domain}.jpg`
+- Hero backgrounds: `hero-bg-{keyword}-{domain}.webp`
+- Feature icons: `icon-{feature-name}-{domain}.webp`
+- Campaign images: `campaign-{campaign-type}-{domain}.webp`
+- FAQ graphics: `faq-support-{domain}.webp`
+- Contact images: `contact-support-{domain}.webp`
 
 ## Quality Checklist
 

@@ -216,16 +216,16 @@ IMAGE SPECIFICATIONS:
 - Style: Consistent brand aesthetic
 
 NAMING CONVENTION:
-- hero-bg-{primary_keyword}.jpg
-- icon-security-{primary_keyword}.png
-- icon-mobile-{primary_keyword}.png
-- icon-support-{primary_keyword}.png
-- icon-payment-{primary_keyword}.png
-- campaign-welcome-{primary_keyword}.jpg
-- campaign-vip-{primary_keyword}.jpg
-- faq-support-{primary_keyword}.png
-- contact-support-{primary_keyword}.jpg
-- favicon-{primary_keyword}.png
+- hero-bg-{primary_keyword}.webp
+- icon-security-{primary_keyword}.webp
+- icon-mobile-{primary_keyword}.webp
+- icon-support-{primary_keyword}.webp
+- icon-payment-{primary_keyword}.webp
+- campaign-welcome-{primary_keyword}.webp
+- campaign-vip-{primary_keyword}.webp
+- faq-support-{primary_keyword}.webp
+- contact-support-{primary_keyword}.webp
+- favicon-{primary_keyword}.webp
 
 Generate all images maintaining consistent quality and brand coherence.
 ```
@@ -304,16 +304,16 @@ Create the following folder structure:
 ├── index.html
 ├── assets/
 │   ├── images/
-│   │   ├── hero-bg-{keyword}.jpg
-│   │   ├── icon-security-{keyword}.png
-│   │   ├── icon-mobile-{keyword}.png
-│   │   ├── icon-support-{keyword}.png
-│   │   ├── icon-payment-{keyword}.png
-│   │   ├── campaign-welcome-{keyword}.jpg
-│   │   ├── campaign-vip-{keyword}.jpg
-│   │   ├── faq-support-{keyword}.png
-│   │   ├── contact-support-{keyword}.jpg
-│   │   └── favicon-{keyword}.png
+│   │   ├── hero-bg-{keyword}.webp
+│   │   ├── icon-security-{keyword}.webp
+│   │   ├── icon-mobile-{keyword}.webp
+│   │   ├── icon-support-{keyword}.webp
+│   │   ├── icon-payment-{keyword}.webp
+│   │   ├── campaign-welcome-{keyword}.webp
+│   │   ├── campaign-vip-{keyword}.webp
+│   │   ├── faq-support-{keyword}.webp
+│   │   ├── contact-support-{keyword}.webp
+│   │   └── favicon-{keyword}.webp
 │   ├── css/
 │   │   └── styles.css (if external CSS needed)
 │   └── js/

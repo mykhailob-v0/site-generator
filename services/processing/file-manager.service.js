@@ -225,13 +225,13 @@ Host: ${new URL(siteUrl).hostname}`;
       scope: "/",
       icons: [
         {
-          src: "icon-192.png",
+          src: "icon-192.webp",
           sizes: "192x192",
           type: "image/png",
           purpose: "any maskable"
         },
         {
-          src: "icon-512.png",
+          src: "icon-512.webp",
           sizes: "512x512",
           type: "image/png",
           purpose: "any maskable"

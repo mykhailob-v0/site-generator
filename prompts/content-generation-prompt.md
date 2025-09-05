@@ -104,9 +104,9 @@ Generate JSON-LD schemas:
 
 ### 6. Icons and Assets (Required)
 ```html
-<link rel="icon" type="image/png" href="assets/images/favicon-{primary-keyword}.png">
-<link rel="shortcut icon" href="assets/images/favicon-{primary-keyword}.png">
-<link rel="apple-touch-icon" href="assets/images/favicon-{primary-keyword}.png">
+<link rel="icon" type="image/png" href="assets/images/favicon-{primary-keyword}.webp">
+<link rel="shortcut icon" href="assets/images/favicon-{primary-keyword}.webp">
+<link rel="apple-touch-icon" href="assets/images/favicon-{primary-keyword}.webp">
 ```
 
 ### 7. Embedded CSS (Required)
@@ -153,11 +153,11 @@ Generate a **complete, production-ready HTML file** that:
 
 ### Asset Reference Pattern
 Use these patterns for images:
-- Hero: `assets/images/hero-bg-{primary-keyword}.jpg`
-- Icons: `assets/images/icon-[type]-{primary-keyword}.png`
-- Campaigns: `assets/images/campaign-[type]-{primary-keyword}.jpg`
-- Support: `assets/images/[section]-support-{primary-keyword}.png`
-- Favicon: `assets/images/favicon-{primary-keyword}.png`
+- Hero: `assets/images/hero-bg-{primary-keyword}.webp`
+- Icons: `assets/images/icon-[type]-{primary-keyword}.webp`
+- Campaigns: `assets/images/campaign-[type]-{primary-keyword}.webp`
+- Support: `assets/images/[section]-support-{primary-keyword}.webp`
+- Favicon: `assets/images/favicon-{primary-keyword}.webp`
 
 ## Variables to Replace
 
