@@ -468,6 +468,60 @@ class ContentService extends AIServiceInterface {
   }
 
   /**
+   * Copy brand-specific assets to output directory
+   * @param {string} outputDir - Output directory path
+   * @param {string} primaryKeyword - Primary keyword to check for brand
+   */
+  async copyBrandAssets(outputDir, primaryKeyword) {
+    try {
+      // Check if this is a Paribahis-related generation
+      const keyword = primaryKeyword.toLowerCase();
+      if (keyword.includes('paribahis')) {
+        this.logOperation('Copying Paribahis brand assets', {
+          outputDir,
+          primaryKeyword
+        });
+        
+        // Source paths for Paribahis assets
+        const paribahisFavicon = path.join('./assets/paribahis/paribahis-favicon-32.png');
+        const paribahisLogo = path.join('./assets/paribahis/paribahis-logo.svg');
+        
+        // Destination paths
+        const faviconDest = path.join(outputDir, 'paribahis-favicon-32.png');
+        const logoDest = path.join(outputDir, 'paribahis-logo.svg');
+        
+        // Copy favicon
+        try {
+          await fs.copyFile(paribahisFavicon, faviconDest);
+          this.logOperation('Paribahis favicon copied', {
+            source: paribahisFavicon,
+            destination: faviconDest
+          });
+        } catch (error) {
+          this.logError('Failed to copy Paribahis favicon', error);
+        }
+        
+        // Copy logo
+        try {
+          await fs.copyFile(paribahisLogo, logoDest);
+          this.logOperation('Paribahis logo copied', {
+            source: paribahisLogo,
+            destination: logoDest
+          });
+        } catch (error) {
+          this.logError('Failed to copy Paribahis logo', error);
+        }
+      }
+    } catch (error) {
+      this.logError('copyBrandAssets', error, {
+        outputDir,
+        primaryKeyword
+      });
+      // Don't throw error - this shouldn't break the main workflow
+    }
+  }
+
+  /**
    * Save raw HTML content to file for debugging and inspection
    * @param {string} htmlContent - The generated HTML content
    * @param {object} params - Generation parameters for folder naming
@@ -477,9 +531,14 @@ class ContentService extends AIServiceInterface {
       // Create output directory path with primaryKeyword and date
       const primaryKeyword = params.primaryKeyword || 'content';
       const date = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+      const sanitizedKeyword = primaryKeyword.toLowerCase().replace(/[^a-z0-9]/g, '-');
+      const outputDir = path.join('./output', `${sanitizedKeyword}-${date}`);
       
       // Ensure directory exists
       await fs.mkdir(outputDir, { recursive: true });
+      
+      // Copy brand-specific assets if applicable
+      await this.copyBrandAssets(outputDir, primaryKeyword);
       
       // Create raw.html file path
       const rawHtmlPath = path.join(outputDir, 'raw.html');
