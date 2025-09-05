@@ -166,11 +166,25 @@ class HTMLCombinerService extends BaseService {
     const imageMap = new Map();
     
     generatedImages.forEach(imageInfo => {
-      if (imageInfo.originalRef) {
-        imageMap.set(imageInfo.originalRef.originalSrc, imageInfo);
+      // Support both new format (originalSrc) and legacy format (originalRef.originalSrc)
+      const originalSrc = imageInfo.originalSrc || (imageInfo.originalRef && imageInfo.originalRef.originalSrc);
+      
+      if (originalSrc) {
+        imageMap.set(originalSrc, imageInfo);
+        this.logOperation('Added image to map', {
+          originalSrc,
+          filename: imageInfo.filename,
+          filepath: imageInfo.filepath
+        });
+      } else {
+        this.logOperation('Warning: Image missing originalSrc reference', {
+          filename: imageInfo.filename || 'unknown',
+          keys: Object.keys(imageInfo)
+        });
       }
     });
     
+    this.logOperation(`Created image map with ${imageMap.size} entries`);
     return imageMap;
   }
 
