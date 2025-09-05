@@ -1,6 +1,7 @@
 const BaseService = require('../base/base.service');
 const fs = require('fs').promises;
 const path = require('path');
+const sharp = require('sharp');
 
 /**
  * HTML Combiner Service
@@ -15,8 +16,15 @@ class HTMLCombinerService extends BaseService {
       supportedFormats: ['.webp', '.jpg', '.jpeg', '.png', '.gif', '.svg'],
       optimizeOutput: true,
       includeMetadata: true,
-      maxImageSize: 10 * 1024 * 1024, // 10MB per image
-      maxTotalSize: 50 * 1024 * 1024, // 50MB total
+      maxImageSize: 100 * 1024, // 100KB per image (much smaller limit)
+      maxTotalSize: 3 * 1024 * 1024, // 3MB total (reasonable for web)
+      targetImageSize: 50 * 1024, // 50KB target per image
+      maxHtmlSize: 5 * 1024 * 1024, // 5MB max HTML file
+      compressionQuality: 75, // 75% quality for JPEG compression
+      webpQuality: 80, // 80% quality for WebP
+      maxWidth: 800, // Max width for images
+      maxHeight: 600, // Max height for images
+      enableImageCompression: true,
       ...config
     };
 
@@ -67,17 +75,39 @@ class HTMLCombinerService extends BaseService {
       for (const [originalSrc, imageInfo] of imageMap.entries()) {
         try {
           // Check individual image size
-          const imageSize = await this.getFileSize(imageInfo.filepath);
-          if (imageSize > this.config.maxImageSize) {
-            this.logOperation('Skipping large image', {
+          const originalImageSize = await this.getFileSize(imageInfo.filepath);
+          
+          let processedImageBuffer;
+          let finalImageSize;
+          
+          if (this.config.enableImageCompression && originalImageSize > this.config.targetImageSize) {
+            // Compress the image before embedding
+            processedImageBuffer = await this.compressImage(imageInfo.filepath);
+            finalImageSize = processedImageBuffer.length;
+            
+            this.logOperation('Image compressed before embedding', {
               filename: imageInfo.filename,
-              size: this.formatBytes(imageSize),
+              originalSize: this.formatBytes(originalImageSize),
+              compressedSize: this.formatBytes(finalImageSize),
+              savings: this.formatBytes(originalImageSize - finalImageSize)
+            });
+          } else {
+            // Use original image if it's already small enough
+            processedImageBuffer = await fs.readFile(imageInfo.filepath);
+            finalImageSize = processedImageBuffer.length;
+          }
+          
+          // Skip if still too large after compression
+          if (finalImageSize > this.config.maxImageSize) {
+            this.logOperation('Skipping large image even after compression', {
+              filename: imageInfo.filename,
+              size: this.formatBytes(finalImageSize),
               maxSize: this.formatBytes(this.config.maxImageSize)
             });
             continue;
           }
 
-          const base64Data = await this.convertImageToBase64(imageInfo.filepath);
+          const base64Data = processedImageBuffer.toString('base64');
           const mimeType = this.getMimeType(imageInfo.filename);
           const dataUrl = `data:${mimeType};base64,${base64Data}`;
           
@@ -86,18 +116,20 @@ class HTMLCombinerService extends BaseService {
           const matches = (combinedHTML.match(regex) || []).length;
           combinedHTML = combinedHTML.replace(regex, dataUrl);
           
-          totalEmbeddedSize += imageSize;
+          totalEmbeddedSize += finalImageSize;
           embeddingResults.push({
             filename: imageInfo.filename,
             originalSrc,
-            size: imageSize,
+            size: finalImageSize,
+            originalSize: originalImageSize,
+            compressed: finalImageSize < originalImageSize,
             replacements: matches,
             embedded: true
           });
           
           this.logOperation('Image embedded successfully', {
             filename: imageInfo.filename,
-            size: this.formatBytes(imageSize),
+            size: this.formatBytes(finalImageSize),
             replacements: matches
           });
 
@@ -189,6 +221,122 @@ class HTMLCombinerService extends BaseService {
   }
 
   /**
+   * Compress image to reduce file size
+   * @param {string} filepath - Path to the image file
+   * @returns {Promise<Buffer>} Compressed image buffer
+   */
+  async compressImage(filepath) {
+    try {
+      const ext = path.extname(filepath).toLowerCase();
+      
+      this.logOperation('Starting image compression', {
+        filepath,
+        extension: ext,
+        targetSize: this.formatBytes(this.config.targetImageSize)
+      });
+      
+      let sharpInstance = sharp(filepath);
+      
+      // Get image metadata
+      const metadata = await sharpInstance.metadata();
+      
+      // Resize if image is too large
+      const shouldResize = metadata.width > this.config.maxWidth || metadata.height > this.config.maxHeight;
+      if (shouldResize) {
+        sharpInstance = sharpInstance.resize(this.config.maxWidth, this.config.maxHeight, {
+          fit: 'inside',
+          withoutEnlargement: true
+        });
+        
+        this.logOperation('Resizing image', {
+          originalSize: `${metadata.width}x${metadata.height}`,
+          maxSize: `${this.config.maxWidth}x${this.config.maxHeight}`
+        });
+      }
+      
+      // Compress based on format and target size
+      let compressedBuffer;
+      
+      if (ext === '.webp') {
+        compressedBuffer = await sharpInstance
+          .webp({ 
+            quality: this.config.webpQuality,
+            effort: 6 // Higher effort for better compression
+          })
+          .toBuffer();
+      } else if (['.jpg', '.jpeg'].includes(ext)) {
+        compressedBuffer = await sharpInstance
+          .jpeg({ 
+            quality: this.config.compressionQuality,
+            progressive: true,
+            mozjpeg: true // Use mozjpeg encoder for better compression
+          })
+          .toBuffer();
+      } else if (ext === '.png') {
+        // Try WebP first for better compression, fallback to PNG
+        try {
+          compressedBuffer = await sharpInstance
+            .webp({ 
+              quality: this.config.webpQuality,
+              effort: 6 
+            })
+            .toBuffer();
+        } catch (webpError) {
+          compressedBuffer = await sharpInstance
+            .png({ 
+              compressionLevel: 9,
+              palette: true // Use palette for smaller files when possible
+            })
+            .toBuffer();
+        }
+      } else {
+        // For other formats, try to convert to WebP
+        compressedBuffer = await sharpInstance
+          .webp({ 
+            quality: this.config.webpQuality,
+            effort: 6 
+          })
+          .toBuffer();
+      }
+      
+      // If still too large, try more aggressive compression
+      if (compressedBuffer.length > this.config.targetImageSize) {
+        this.logOperation('Applying aggressive compression', {
+          currentSize: this.formatBytes(compressedBuffer.length),
+          targetSize: this.formatBytes(this.config.targetImageSize)
+        });
+        
+        // Calculate target quality to reach desired size
+        const targetQuality = Math.max(30, Math.floor(this.config.webpQuality * 0.7));
+        
+        compressedBuffer = await sharp(filepath)
+          .resize(this.config.maxWidth * 0.8, this.config.maxHeight * 0.8, {
+            fit: 'inside',
+            withoutEnlargement: true
+          })
+          .webp({ 
+            quality: targetQuality,
+            effort: 6 
+          })
+          .toBuffer();
+      }
+      
+      this.logOperation('Image compression completed', {
+        filepath,
+        finalSize: this.formatBytes(compressedBuffer.length),
+        compressionRatio: `${((1 - compressedBuffer.length / (await this.getFileSize(filepath))) * 100).toFixed(1)}%`
+      });
+      
+      return compressedBuffer;
+      
+    } catch (error) {
+      this.logError('Image compression failed', error, { filepath });
+      // Fallback to original file
+      return await fs.readFile(filepath);
+    }
+  }
+
+  /**
    * Convert image file to base64 string
    * @param {string} filepath - Path to the image file
    * @returns {Promise<string>} Base64 encoded image data
@@ -263,22 +411,34 @@ class HTMLCombinerService extends BaseService {
     const timestamp = new Date().toISOString();
     const embeddedImages = embeddingResults.filter(r => r.embedded);
     const failedImages = embeddingResults.filter(r => !r.embedded);
+    const compressedImages = embeddedImages.filter(r => r.compressed);
+    
+    // Calculate compression statistics
+    const totalOriginalSize = embeddedImages.reduce((sum, img) => sum + (img.originalSize || img.size), 0);
+    const totalCompressionSavings = totalOriginalSize - totalSize;
+    const averageCompressionRatio = totalOriginalSize > 0 ? ((totalCompressionSavings / totalOriginalSize) * 100).toFixed(1) : 0;
     
     let metadata = `
     <!-- 
     🎰 Embedded Images Metadata 🎰
     Generated: ${timestamp}
-    Service: HTMLCombinerService v2.0
+    Service: HTMLCombinerService v2.1 (with compression)
     Total Images Processed: ${embeddingResults.length}
     Successfully Embedded: ${embeddedImages.length}
     Failed to Embed: ${failedImages.length}
+    Images Compressed: ${compressedImages.length}
     Total Embedded Size: ${this.formatBytes(totalSize)}
-    Format: Base64 Data URLs
+    Total Original Size: ${this.formatBytes(totalOriginalSize)}
+    Compression Savings: ${this.formatBytes(totalCompressionSavings)} (${averageCompressionRatio}%)
+    Format: Base64 Data URLs (optimized)
     
     Successfully Embedded Images:`;
 
     embeddedImages.forEach(img => {
-      metadata += `\n    - ${img.filename} (${this.formatBytes(img.size)}) - ${img.replacements} replacement(s)`;
+      const compressionInfo = img.compressed 
+        ? ` (compressed from ${this.formatBytes(img.originalSize)})`
+        : '';
+      metadata += `\n    - ${img.filename} (${this.formatBytes(img.size)})${compressionInfo} - ${img.replacements} replacement(s)`;
     });
 
     if (failedImages.length > 0) {
@@ -293,7 +453,9 @@ class HTMLCombinerService extends BaseService {
     Processing Statistics:
     - Files Processed: ${this.stats.filesProcessed}
     - Total Images Embedded: ${this.stats.imagesEmbedded}
+    - Images Compressed: ${compressedImages.length}
     - Optimization Savings: ${this.formatBytes(this.stats.optimizationSavings)}
+    - Compression Savings: ${this.formatBytes(totalCompressionSavings)}
     -->`;
     
     return metadata;
