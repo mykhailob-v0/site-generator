@@ -116,16 +116,23 @@ Include complete responsive CSS with:
   - Primary colors: blues, greens, purples, dark reds, or sophisticated neutrals
   - Accent colors: gold, silver, cyan, orange, or complementary choices
   - Avoid repetitive blue/gold combinations - create visual variety
-- Mobile-first responsive design
+- **System fonts only**: Use native system font stacks for optimal performance
+  - Primary: `system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif`
+  - Monospace: `'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace`
+  - **NO external font imports** (Google Fonts, etc.) to prevent render blocking
+- Mobile-first responsive design with optimized loading
 - Modern layouts (CSS Grid, Flexbox) with unique layout approaches
-- Smooth animations and professional typography with varied styles
+- Smooth animations and professional typography with varied system font styles
+- **Performance optimizations**: CSS optimized for fast rendering and minimal layout shifts
 
 ### 8. Embedded JavaScript (Required)
-Include functionality for:
-- FAQ accordion behavior
-- Smooth scrolling navigation
-- Form validation
-- Mobile responsiveness
+Include optimized functionality for:
+- FAQ accordion behavior (lightweight implementation)
+- Smooth scrolling navigation with performance optimization
+- Form validation with minimal DOM manipulation
+- Mobile responsiveness without layout shifts
+- **Performance focused**: Minimal JavaScript, no external dependencies
+- **Fast loading**: Defer non-critical scripts, optimize event listeners
 
 ## Content Quality Standards
 
@@ -134,6 +141,13 @@ Include functionality for:
 - **Keyword integration** - Natural use of {PRIMARY_KEYWORD} and {SECONDARY_KEYWORDS}
 - **Focus area emphasis** - Highlight {FOCUS_AREAS} throughout content
 - **Turkish cultural sensitivity** - Appropriate for Turkish gambling market
+
+### Performance Requirements (Critical)
+- **No external font imports** - Use system fonts only to prevent render blocking
+- **Minimize layout shifts** - Define explicit dimensions for all elements
+- **Optimize critical rendering path** - Inline critical CSS, defer non-critical scripts
+- **Fast loading** - Lightweight code, optimized images, minimal DOM manipulation
+- **Mobile-first performance** - Prioritize mobile device performance optimization
 
 ### Compliance Elements (Required)
 - 18+ age verification notices
@@ -157,7 +171,27 @@ Use these patterns for images:
 - Icons: `assets/images/icon-[type]-{primary-keyword}.webp`
 - Campaigns: `assets/images/campaign-[type]-{primary-keyword}.webp`
 - Support: `assets/images/[section]-support-{primary-keyword}.webp`
-- Favicon: `assets/images/favicon-{primary-keyword}.webp`
+- Favicon: `assets/images/favicon-{primary-keyword}.png`
+
+### CSS Performance Standards
+**Font Stacks (Use ONLY these - no external imports):**
+```css
+/* Primary text - modern system fonts */
+font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+
+/* Headings - system serif stack */
+font-family: ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
+
+/* Monospace - system monospace */
+font-family: ui-monospace, 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+```
+
+**Critical CSS optimizations:**
+- Inline all critical styles to prevent render blocking
+- Use `font-display: swap` for any custom fonts (if absolutely necessary)
+- Define explicit dimensions for all images and containers
+- Minimize CSS selectors and avoid complex selectors
+- Use CSS Grid/Flexbox efficiently to prevent layout shifts
 
 ## Variables to Replace
 
@@ -172,8 +206,14 @@ Use these patterns for images:
 1. **Generate unique content** for each section based on structure plan
 2. **Keep text short and impactful** - no verbose descriptions
 3. **Maintain professional gambling industry standards**
-4. **Ensure mobile-first responsive design**
+4. **Ensure mobile-first responsive design with performance optimization**
 5. **Include all mandatory SEO elements regardless of structure**
-6. **Create valid, production-ready HTML**
+6. **Create valid, production-ready HTML with optimal performance**
+7. **Performance critical requirements**:
+   - Use ONLY system fonts - no external font imports
+   - Define explicit width/height for images to prevent layout shifts
+   - Minimize CSS and JavaScript for fast parsing
+   - Optimize for Core Web Vitals (FCP, LCP, CLS)
+   - Ensure fast rendering on mobile devices
 
-The result should be a complete HTML file that combines the dynamic structure plan with concise, high-quality content and all required SEO elements.
+The result should be a complete HTML file that combines the dynamic structure plan with concise, high-quality content, all required SEO elements, and optimal performance characteristics.
