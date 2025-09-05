@@ -18,13 +18,15 @@ class HTMLCombinerService extends BaseService {
       includeMetadata: true,
       maxImageSize: 100 * 1024, // 100KB per image (much smaller limit)
       maxTotalSize: 3 * 1024 * 1024, // 3MB total (reasonable for web)
-      targetImageSize: 50 * 1024, // 50KB target per image
+      targetImageSize: 30 * 1024, // 30KB target per image (reduced from 50KB)
       maxHtmlSize: 5 * 1024 * 1024, // 5MB max HTML file
       compressionQuality: 75, // 75% quality for JPEG compression
-      webpQuality: 80, // 80% quality for WebP
-      maxWidth: 800, // Max width for images
-      maxHeight: 600, // Max height for images
+      webpQuality: 85, // 85% quality for WebP (increased for better small image quality)
+      maxWidth: 1200, // Max width for large images like hero backgrounds
+      maxHeight: 800, // Max height for large images
       enableImageCompression: true,
+      enableSmartSizing: true, // New feature flag
+      retinaScaling: 2, // 2x scaling for retina displays
       ...config
     };
 
@@ -120,8 +122,8 @@ class HTMLCombinerService extends BaseService {
           let finalImageSize;
           
           if (this.config.enableImageCompression && originalImageSize > this.config.targetImageSize) {
-            // Compress the image before embedding
-            processedImageBuffer = await this.compressImage(imageInfo.filepath);
+            // Compress the image before embedding with smart sizing
+            processedImageBuffer = await this.compressImage(imageInfo.filepath, imageRef, combinedHTML);
             finalImageSize = processedImageBuffer.length;
             
             this.logOperation('Image compressed before embedding', {
@@ -287,17 +289,131 @@ class HTMLCombinerService extends BaseService {
   }
 
   /**
-   * Compress image to reduce file size
+   * Parse CSS to determine optimal image dimensions
+   * @param {string} htmlContent - HTML content containing CSS
+   * @param {string} imageSrc - Image source to find sizing for
+   * @returns {Object} Optimal dimensions {width, height, context}
+   */
+  parseImageDimensions(htmlContent, imageSrc) {
+    const imageBaseName = imageSrc.split('/').pop().split('.')[0].split('-')[0]; // e.g., "icon" from "icon-security-Brand-123.webp"
+    
+    // Define size mappings based on CSS analysis
+    const sizePresets = {
+      'favicon': { width: 32, height: 32, context: 'brand favicon' },
+      'icon': { width: 28, height: 28, context: 'feature icon' },
+      'campaign': { width: 220, height: 165, context: 'campaign image' }, // 4:3 aspect ratio
+      'hero': { width: 1200, height: 600, context: 'hero background' },
+      'section': { width: 600, height: 400, context: 'section image' }
+    };
+    
+    // Extract CSS rules to find specific sizing
+    const cssRegex = /<style[^>]*>([\s\S]*?)<\/style>/gi;
+    let match;
+    const cssRules = [];
+    
+    while ((match = cssRegex.exec(htmlContent)) !== null) {
+      cssRules.push(match[1]);
+    }
+    
+    const fullCSS = cssRules.join('\n');
+    
+    // Look for specific class or context-based sizing
+    const sizePatterns = [
+      // Brand images (favicon)
+      { pattern: /\.brand\s+img\s*\{[^}]*width:\s*(\d+)px[^}]*height:\s*(\d+)px/i, context: 'brand', priority: 1 },
+      { pattern: /\.brand\s+img\s*\{[^}]*width:\s*(\d+)px/i, context: 'brand', priority: 1 },
+      
+      // Badge images (small icons in badges)
+      { pattern: /\.badge\s+img\s*\{[^}]*width:\s*(\d+)px[^}]*height:\s*(\d+)px/i, context: 'badge', priority: 2 },
+      { pattern: /\.badge\s+img\s*\{[^}]*width:\s*(\d+)px/i, context: 'badge', priority: 2 },
+      
+      // Kicker images (small icons in kicker elements)
+      { pattern: /\.kicker\s+img\s*\{[^}]*width:\s*(\d+)px[^}]*height:\s*(\d+)px/i, context: 'kicker', priority: 2 },
+      { pattern: /\.kicker\s+img\s*\{[^}]*width:\s*(\d+)px/i, context: 'kicker', priority: 2 },
+      
+      // Feature icons (main content icons)
+      { pattern: /\.icon\s*\{[^}]*width:\s*(\d+)px[^}]*height:\s*(\d+)px/i, context: 'icon', priority: 3 },
+      { pattern: /\.icon\s*\{[^}]*width:\s*(\d+)px/i, context: 'icon', priority: 3 },
+      
+      // Campaign images (promotional banners)
+      { pattern: /\.campaign\s+img\s*\{[^}]*width:\s*(\d+)px/i, context: 'campaign', priority: 4 },
+      { pattern: /\.campaign\s*\{[^}]*grid-template-columns:\s*(\d+)px/i, context: 'campaign', priority: 4 },
+      
+      // Hero backgrounds (large images)
+      { pattern: /\.hero[^{]*\{[^}]*background:[^}]*url\([^)]+\)[^}]*\}/i, context: 'hero', priority: 5 }
+    ];
+    
+    // Try to find specific CSS sizing with priority order
+    for (const { pattern, context, priority } of sizePatterns.sort((a, b) => a.priority - b.priority)) {
+      const matches = pattern.exec(fullCSS);
+      if (matches && matches[1]) {
+        const width = parseInt(matches[1]);
+        const height = parseInt(matches[2]) || width; // Square if only width found
+        
+        // Special handling for campaign images (maintain aspect ratio)
+        let finalHeight = height;
+        if (context === 'campaign' && !matches[2]) {
+          finalHeight = Math.floor(width * 0.75); // 4:3 aspect ratio
+        }
+        
+        if (width > 0 && width <= 2000) { // Reasonable bounds
+          this.logOperation('Found CSS-based dimensions', {
+            imageSrc,
+            context,
+            width,
+            height: finalHeight,
+            priority,
+            cssMatch: matches[0].substring(0, 100) + '...'
+          });
+          
+          return { 
+            width: Math.max(width, 16), // Minimum 16px
+            height: Math.max(finalHeight, 16), 
+            context: `${context} (CSS-derived)` 
+          };
+        }
+      }
+    }
+    
+    // Fallback to preset based on image type
+    let bestMatch = sizePresets['icon']; // Default fallback
+    
+    for (const [type, preset] of Object.entries(sizePresets)) {
+      if (imageBaseName.includes(type) || imageSrc.includes(type)) {
+        bestMatch = preset;
+        break;
+      }
+    }
+    
+    this.logOperation('Using preset dimensions', {
+      imageSrc,
+      imageBaseName,
+      preset: bestMatch
+    });
+    
+    return bestMatch;
+  }
+
+  /**
+   * Compress image to reduce file size with smart sizing
    * @param {string} filepath - Path to the image file
+   * @param {string} imageSrc - Original image src for context
+   * @param {string} htmlContent - HTML content for CSS parsing
    * @returns {Promise<Buffer>} Compressed image buffer
    */
-  async compressImage(filepath) {
+  async compressImage(filepath, imageSrc = '', htmlContent = '') {
     try {
       const ext = path.extname(filepath).toLowerCase();
       
-      this.logOperation('Starting image compression', {
+      // Determine optimal dimensions based on CSS and context
+      const optimalDimensions = imageSrc && htmlContent 
+        ? this.parseImageDimensions(htmlContent, imageSrc)
+        : { width: this.config.maxWidth, height: this.config.maxHeight, context: 'default fallback' };
+      
+      this.logOperation('Starting smart image compression', {
         filepath,
         extension: ext,
+        optimalDimensions,
         targetSize: this.formatBytes(this.config.targetImageSize)
       });
       
@@ -306,17 +422,23 @@ class HTMLCombinerService extends BaseService {
       // Get image metadata
       const metadata = await sharpInstance.metadata();
       
-      // Resize if image is too large
-      const shouldResize = metadata.width > this.config.maxWidth || metadata.height > this.config.maxHeight;
+      // Use optimal dimensions with 2x scaling for retina displays
+      const targetWidth = Math.min(optimalDimensions.width * 2, this.config.maxWidth);
+      const targetHeight = Math.min(optimalDimensions.height * 2, this.config.maxHeight);
+      
+      // Resize to optimal dimensions
+      const shouldResize = metadata.width > targetWidth || metadata.height > targetHeight;
       if (shouldResize) {
-        sharpInstance = sharpInstance.resize(this.config.maxWidth, this.config.maxHeight, {
+        sharpInstance = sharpInstance.resize(targetWidth, targetHeight, {
           fit: 'inside',
           withoutEnlargement: true
         });
         
-        this.logOperation('Resizing image', {
+        this.logOperation('Smart resizing image', {
           originalSize: `${metadata.width}x${metadata.height}`,
-          maxSize: `${this.config.maxWidth}x${this.config.maxHeight}`
+          targetSize: `${targetWidth}x${targetHeight}`,
+          context: optimalDimensions.context,
+          retinaScaling: '2x'
         });
       }
       
@@ -375,8 +497,12 @@ class HTMLCombinerService extends BaseService {
         // Calculate target quality to reach desired size
         const targetQuality = Math.max(30, Math.floor(this.config.webpQuality * 0.7));
         
+        // Use slightly smaller dimensions for aggressive compression
+        const aggressiveWidth = Math.floor(targetWidth * 0.8);
+        const aggressiveHeight = Math.floor(targetHeight * 0.8);
+        
         compressedBuffer = await sharp(filepath)
-          .resize(this.config.maxWidth * 0.8, this.config.maxHeight * 0.8, {
+          .resize(aggressiveWidth, aggressiveHeight, {
             fit: 'inside',
             withoutEnlargement: true
           })
