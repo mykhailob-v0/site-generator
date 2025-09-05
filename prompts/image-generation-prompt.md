@@ -1,14 +1,24 @@
-# Image Generation Prompts for Gambling/Betting Sites
+# Dynamic Image Generation for Unique Gambling/Betting Sites
 
 ## System Instructions for DALL-E Image Generation
 
 You are generating images for a professional gambling/betting website that must meet high-quality standards and comply with advertising regulations. All images should be:
 
 - Professional and trustworthy in appearance
+- **Visually unique** with varied color schemes and design approaches
 - Suitable for adult audiences (18+)
 - Compliant with gambling advertising standards
 - Optimized for web use
 - Culturally appropriate for Turkish audience
+
+## Dynamic Design Approach
+
+**IMPORTANT**: Generate visually distinct designs for each website by varying:
+- **Color schemes**: Use diverse professional palettes (not just blue/gold)
+  - Options: Deep purple/silver, Forest green/copper, Burgundy/cream, Navy/orange, Charcoal/cyan, etc.
+- **Design styles**: Vary between modern minimalist, geometric, gradient-heavy, or sophisticated corporate
+- **Visual elements**: Different approaches to shapes, patterns, and graphic elements
+- **Layout composition**: Unique arrangements and visual hierarchy for each generation
 
 ## Image Categories and Prompts
 
@@ -19,16 +29,16 @@ You are generating images for a professional gambling/betting website that must 
 
 **Prompt Template**:
 ```
-Create a professional hero background image for a Turkish betting website about {PRIMARY_KEYWORD}. The image should feature:
-- Modern, sleek design with dark blue and gold color scheme
-- Abstract geometric patterns or subtle casino/sports elements
-- Professional lighting and gradients
+Create a professional hero background image for a Turkish betting website about {PRIMARY_KEYWORD}. Generate a unique visual design:
+- **Dynamic color scheme**: Choose from professional palettes like deep purple/silver, forest green/copper, burgundy/cream, navy/orange, charcoal/cyan, or other sophisticated combinations (avoid repetitive blue/gold)
+- Abstract geometric patterns, gradients, or subtle casino/sports elements with unique styling
+- Professional lighting and varied visual approaches
 - No text overlays
-- Sophisticated and trustworthy appearance
+- Sophisticated and trustworthy appearance with distinct visual identity
 - Suitable for 18+ gambling content
 - Turkish cultural elements subtly integrated
 - 16:9 aspect ratio, high resolution
-- Web-optimized aesthetic
+- Web-optimized aesthetic with unique character
 ```
 
 ### 2. Feature/Advantage Icons
@@ -40,11 +50,11 @@ Create a professional hero background image for a Turkish betting website about 
 
 **Security/Safety Icon**:
 ```
-Create a modern, professional icon representing security and safety for a Turkish betting website. Include:
-- Shield or lock symbolism
-- Clean, minimalist design
-- Blue and gold color palette
-- Professional appearance
+Create a modern, professional icon representing security and safety for a Turkish betting website. Generate unique design:
+- Shield or lock symbolism with distinctive styling
+- Clean, minimalist design with unique visual approach
+- **Dynamic colors**: Choose from diverse professional palettes (purple/silver, green/copper, burgundy/cream, etc.)
+- Professional appearance with distinct character
 - No text
 - Suitable for web use
 - 1:1 aspect ratio
@@ -53,10 +63,10 @@ Create a modern, professional icon representing security and safety for a Turkis
 **Mobile Compatibility Icon**:
 ```
 Create a sleek icon showing mobile compatibility for a betting platform. Features:
-- Smartphone or responsive design elements
-- Modern, clean aesthetic
-- Professional color scheme (blue/gold)
-- Minimalist design
+- Smartphone or responsive design elements with unique styling
+- Modern, clean aesthetic with distinctive approach
+- **Professional color scheme**: Use varied palettes beyond blue/gold
+- Minimalist design with unique character
 - Web-ready quality
 - 1:1 aspect ratio
 ```
@@ -64,10 +74,10 @@ Create a sleek icon showing mobile compatibility for a betting platform. Feature
 **Customer Support Icon**:
 ```
 Design a professional customer support icon for a gambling website. Include:
-- Headset, chat, or support symbolism
-- Trustworthy, professional appearance
-- Blue and gold colors
-- Clean, modern design
+- Headset, chat, or support symbolism with distinctive styling
+- Trustworthy, professional appearance with unique visual approach
+- **Dynamic colors**: Select from varied professional palettes
+- Clean, modern design with distinct character
 - No text elements
 - 1:1 aspect ratio
 ```
@@ -75,11 +85,11 @@ Design a professional customer support icon for a gambling website. Include:
 **Payment Security Icon**:
 ```
 Create an icon representing secure payments for a betting site. Features:
-- Credit card, security, or payment symbols
-- Professional, trustworthy design
-- Modern aesthetic
-- Blue and gold color scheme
-- Clean, minimalist style
+- Credit card, security, or payment symbols with unique styling
+- Professional, trustworthy design with distinctive approach
+- Modern aesthetic with varied color scheme
+- **Dynamic palette**: Use diverse professional colors
+- Clean, minimalist style with unique character
 - 1:1 aspect ratio
 ```
 
@@ -91,23 +101,23 @@ Create an icon representing secure payments for a betting site. Features:
 **Welcome Bonus Illustration**:
 ```
 Design a professional illustration for a welcome bonus campaign on a Turkish betting site about {PRIMARY_KEYWORD}. Include:
-- Gift, bonus, or welcome symbolism
-- Professional gold and blue color palette
-- Modern, attractive design
+- Gift, bonus, or welcome symbolism with unique visual approach
+- **Dynamic color palette**: Choose from varied professional schemes (purple/silver, green/copper, burgundy/cream, etc.)
+- Modern, attractive design with distinctive character
 - Suitable for gambling content (18+)
 - Turkish cultural appropriateness
 - No specific monetary amounts
 - 4:3 aspect ratio
-- High-quality, web-ready
+- High-quality, web-ready with unique aesthetic
 ```
 
 **VIP Program Illustration**:
 ```
 Create an elegant VIP program illustration for a betting platform. Features:
-- Luxury, premium, or VIP symbolism
-- Sophisticated color scheme (gold, dark blue)
-- Professional and exclusive appearance
-- Modern design aesthetic
+- Luxury, premium, or VIP symbolism with distinctive styling
+- **Sophisticated color scheme**: Use varied professional palettes beyond gold/blue
+- Professional and exclusive appearance with unique character
+- Modern design aesthetic with distinct visual approach
 - Suitable for adult gambling content
 - 4:3 aspect ratio
 ```
@@ -120,10 +130,10 @@ Create an elegant VIP program illustration for a betting platform. Features:
 **FAQ Support Graphic**:
 ```
 Design a helpful illustration for an FAQ section of a betting website. Include:
-- Question mark, help, or information symbols
-- Friendly but professional appearance
-- Blue and gold color scheme
-- Modern, clean design
+- Question mark, help, or information symbols with unique styling
+- Friendly but professional appearance with distinctive approach
+- **Dynamic color scheme**: Select from varied professional palettes
+- Modern, clean design with unique character
 - Supportive and trustworthy feel
 - 4:3 aspect ratio
 ```
@@ -136,10 +146,10 @@ Design a helpful illustration for an FAQ section of a betting website. Include:
 **Customer Service Illustration**:
 ```
 Create a professional customer service illustration for a Turkish betting site. Features:
-- Customer support, communication symbols
-- Professional, trustworthy appearance
-- Modern design with blue and gold colors
-- Suitable for gambling industry
+- Customer support, communication symbols with unique styling
+- Professional, trustworthy appearance with distinctive approach
+- **Modern design**: Use varied professional color schemes beyond blue/gold
+- Suitable for gambling industry with unique character
 - Friendly but professional tone
 - 3:2 aspect ratio
 ```
@@ -156,14 +166,18 @@ Create a professional customer service illustration for a Turkish betting site. 
 ### Content Guidelines
 - **Age Appropriate**: 18+ gambling content compliance
 - **Cultural Sensitivity**: Appropriate for Turkish audience
-- **Brand Consistency**: Consistent color scheme and style
+- **Visual Uniqueness**: Generate diverse, non-repetitive designs with varied color schemes
 - **Regulatory Compliance**: No misleading imagery
-- **Professional Standards**: High-quality, trustworthy appearance
+- **Professional Standards**: High-quality, trustworthy appearance with distinct character
 
-### Color Palette Standards
-- **Primary**: Dark blue (#0d1421), Gold (#f5c542)
-- **Secondary**: White (#ffffff), Light gray (#f8f9fa)
-- **Accent**: Dark gold (#d4af37), Navy blue (#1a365d)
+### Dynamic Color Palette Options
+Instead of fixed colors, choose from these professional combinations:
+- **Option 1**: Deep purple (#2d1b69), Silver (#c0c0c0), White (#ffffff)
+- **Option 2**: Forest green (#228b22), Copper (#b87333), Cream (#f5f5dc)
+- **Option 3**: Burgundy (#800020), Cream (#f5f5dc), Gold accent (#ffd700)
+- **Option 4**: Navy (#1e3a8a), Orange (#ff6600), Light gray (#f8f9fa)
+- **Option 5**: Charcoal (#36454f), Cyan (#00bcd4), White (#ffffff)
+- **Or generate other sophisticated, professional color combinations**
 
 ## Image Generation Workflow
 
