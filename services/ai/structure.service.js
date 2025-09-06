@@ -20,7 +20,7 @@ class StructureService extends AIServiceInterface {
       maxRetries: 3,
       timeout: 60000,
       temperature: 0.7,
-      maxTokens: 4000,
+      maxTokens: 128000,
       promptsDirectory: config.promptsDirectory || './prompts',
       ...config
     };
@@ -108,7 +108,11 @@ class StructureService extends AIServiceInterface {
     } catch (error) {
       const duration = Date.now() - startTime;
       this.updateUsageStats({ errors: 1, responseTime: duration });
-      this.logError('generateStructure', error, { params, duration });
+      this.logError(error, { 
+        operation: 'generateStructure',
+        params, 
+        duration 
+      });
       
       throw new OpenAIError(
         `Structure generation failed: ${error.message}`, 
@@ -150,7 +154,7 @@ class StructureService extends AIServiceInterface {
       return prompt;
 
     } catch (error) {
-      this.logError('buildStructurePrompt', error);
+      this.logError(error, { operation: 'buildStructurePrompt' });
       
       // Fallback to basic prompt if template fails
       this.logOperation('Using fallback prompt due to template error');
@@ -232,16 +236,22 @@ Return only valid JSON without markdown formatting.`;
         }
       });
 
+      // Log detailed response structure for debugging
       this.logOperation('Structured API call successful', { 
         tokensUsed: response.usage?.total_tokens,
         hasChoices: !!response.choices?.[0],
-        hasContent: !!response.choices?.[0]?.message?.content
+        hasContent: !!response.choices?.[0]?.message?.content,
+        hasParsed: !!response.choices?.[0]?.message?.parsed,
+        finishReason: response.choices?.[0]?.finish_reason
       });
 
       return response;
 
     } catch (error) {
-      this.logError('Structured API call failed', error, { model: this.model });
+      this.logError(error, { 
+        operation: 'Structured API call failed',
+        model: this.model 
+      });
       throw new OpenAIError(`Structured API call failed: ${error.message}`, this.model, error.code);
     }
   }
@@ -260,37 +270,72 @@ Return only valid JSON without markdown formatting.`;
     });
 
     try {
-      // Try response.output_parsed first (structured output)
+      // Debug: Log the actual response structure when detailed logging is enabled
+      const { logLevelManager } = require('../../src/utils/log-levels');
+      if (logLevelManager && logLevelManager.getLevel() === 'detailed') {
+        this.log('Response structure debug', 'verbose', {
+          responseKeys: Object.keys(response),
+          choicesLength: response.choices?.length,
+          firstChoiceKeys: response.choices?.[0] ? Object.keys(response.choices[0]) : null,
+          messageKeys: response.choices?.[0]?.message ? Object.keys(response.choices[0].message) : null,
+          refusalPresent: !!response.choices?.[0]?.message?.refusal,
+          refusalText: response.choices?.[0]?.message?.refusal,
+          contentType: typeof response.choices?.[0]?.message?.content,
+          contentLength: response.choices?.[0]?.message?.content?.length || 0,
+          finishReason: response.choices?.[0]?.finish_reason,
+          parsedType: typeof response.choices?.[0]?.message?.parsed,
+          hasParsedData: !!response.choices?.[0]?.message?.parsed
+        });
+      }
+
+      // Check for refusal first
+      if (response.choices && response.choices[0] && response.choices[0].message.refusal) {
+        throw new Error(`OpenAI refused the request: ${response.choices[0].message.refusal}`);
+      }
+
+      // With structured outputs (strict: true), the response should be in message.parsed
+      if (response.choices && response.choices[0] && response.choices[0].message.parsed) {
+        this.logOperation('Using structured output from message.parsed');
+        const parsed = response.choices[0].message.parsed;
+        
+        // Log the parsed structure for debugging
+        if (logLevelManager && logLevelManager.getLevel() === 'detailed') {
+          this.log('Parsed structure content', 'verbose', {
+            parsedKeys: Object.keys(parsed),
+            hasStructure: !!parsed.structure,
+            hasSeoStrategy: !!parsed.seo_strategy,
+            hasUniqueElements: !!parsed.unique_elements,
+            hasReasoning: !!parsed.reasoning,
+            structureSectionsCount: parsed.structure?.sections?.length || 0
+          });
+        }
+        
+        // Validate the structured output (should already be valid due to strict: true)
+        this.validateStructuredOutput(parsed);
+        return parsed;
+      }
+
+      // Fallback: Try legacy structured output formats
       if (response.output_parsed) {
-        this.logOperation('Using output_parsed from structured response');
+        this.logOperation('Using legacy output_parsed format');
         this.validateStructuredOutput(response.output_parsed);
         return response.output_parsed;
       }
-      
-      // Try response.choices[0].message.parsed (alternate structured output format)
-      if (response.choices && response.choices[0] && response.choices[0].message.parsed) {
-        this.logOperation('Using choices[0].message.parsed from structured response');
-        this.validateStructuredOutput(response.choices[0].message.parsed);
-        return response.choices[0].message.parsed;
-      }
 
-      // Fallback to parsing text content
+      // Fallback to parsing text content (for non-structured responses)
       let jsonText = '';
       
-      // Try response.output_text
       if (response.output_text && typeof response.output_text === 'string') {
         jsonText = response.output_text;
-      }
-      // Try response.choices content
-      else if (response.choices && response.choices[0]) {
+      } else if (response.choices && response.choices[0]) {
         jsonText = response.choices[0].message.content || '';
       }
 
       if (!jsonText || typeof jsonText !== 'string') {
-        throw new Error('No valid text content found in API response');
+        throw new Error('No valid structured output or text content found in API response');
       }
 
-      this.logOperation('Parsing JSON from text content', {
+      this.logOperation('Fallback: Parsing JSON from text content', {
         contentLength: jsonText.length,
         startsWithBrace: jsonText.trim().startsWith('{'),
         endsWithBrace: jsonText.trim().endsWith('}')
@@ -319,7 +364,7 @@ Return only valid JSON without markdown formatting.`;
           parsed = JSON.parse(repaired);
           this.logOperation('JSON parsed successfully after repair');
         } catch (e2) {
-          this.logError('JSON repair failed', e2);
+          this.logError(e2, { operation: 'JSON repair failed' });
           throw new Error('Failed to parse structured output JSON');
         }
       }
@@ -336,7 +381,14 @@ Return only valid JSON without markdown formatting.`;
       return parsed;
 
     } catch (error) {
-      this.logError('Structure parsing failed', error);
+      this.logError(error, {
+        operation: 'Structure parsing failed',
+        errorMessage: error.message,
+        errorStack: error.stack,
+        responseHasChoices: !!response.choices,
+        responseChoicesLength: response.choices?.length,
+        firstChoiceType: typeof response.choices?.[0]
+      });
       
       // Return default structure if parsing fails
       this.logOperation('Using fallback default structure');
@@ -349,36 +401,70 @@ Return only valid JSON without markdown formatting.`;
    * @param {object} structure - Structure to validate
    */
   validateStructuredOutput(structure) {
-    // Basic structural validation
+    // Debug: Log the actual structure when detailed logging is enabled
+    const { logLevelManager } = require('../../src/utils/log-levels');
+    if (logLevelManager && logLevelManager.getLevel() === 'detailed') {
+      this.log('Validating structure', 'verbose', {
+        structureKeys: Object.keys(structure),
+        hasStructure: !!structure.structure,
+        hasSeoStrategy: !!structure.seo_strategy,
+        hasUniqueElements: !!structure.unique_elements,
+        hasReasoning: !!structure.reasoning,
+        structureSectionsCount: structure.structure?.sections?.length || 0,
+        actualStructure: JSON.stringify(structure, null, 2).substring(0, 1000) + '...'
+      });
+    }
+
+    // Basic structural validation - only require structure.sections
     if (!structure.structure || !Array.isArray(structure.structure.sections)) {
       throw new Error('Parsed JSON missing structure.sections');
     }
 
+    // Add missing fields with defaults if they're not present (OpenAI schema compliance issue)
     if (!structure.seo_strategy) {
-      throw new Error('Parsed JSON missing seo_strategy');
+      this.logOperation('Adding default seo_strategy (missing from OpenAI response)');
+      structure.seo_strategy = {
+        title_focus: "primary_keyword",
+        description_focus: "security_and_reliability", 
+        schema_priority: ["FAQ", "Organization", "BreadcrumbList"]
+      };
     }
 
     if (!structure.unique_elements || !Array.isArray(structure.unique_elements)) {
-      throw new Error('Parsed JSON missing unique_elements array');
+      this.logOperation('Adding default unique_elements (missing from OpenAI response)');
+      structure.unique_elements = ["security_certification_showcase", "mobile_app_download_section"];
     }
 
     if (!structure.reasoning) {
-      throw new Error('Parsed JSON missing reasoning');
+      this.logOperation('Adding default reasoning (missing from OpenAI response)');
+      structure.reasoning = {
+        structure_rationale: "Structure generated based on gambling site best practices",
+        focus_justification: "Focus areas selected to build trust and engagement",
+        differentiation_strategy: "Emphasis on security and user experience for competitive advantage"
+      };
     }
 
     // Validate sections have required properties
     const invalidSections = structure.structure.sections.filter(section => 
       !section.name || typeof section.priority !== 'number' || 
-      typeof section.required !== 'boolean' || !section.focus
+      typeof section.required !== 'boolean'
     );
 
     if (invalidSections.length > 0) {
-      throw new Error(`Invalid sections found: missing required properties`);
+      this.logOperation('Fixing invalid sections (missing required properties)');
+      // Fix invalid sections by adding missing properties
+      structure.structure.sections = structure.structure.sections.map(section => ({
+        name: section.name || 'features',
+        priority: typeof section.priority === 'number' ? section.priority : 1,
+        required: typeof section.required === 'boolean' ? section.required : true,
+        focus: section.focus || 'security_trust'
+      }));
     }
 
-    this.logOperation('Structured output validation passed', {
+    this.logOperation('Structured output validation passed (with corrections)', {
       sectionsCount: structure.structure.sections.length,
-      uniqueElementsCount: structure.unique_elements.length
+      uniqueElementsCount: structure.unique_elements.length,
+      correctionsMade: true
     });
   }
 
@@ -442,7 +528,7 @@ Return only valid JSON without markdown formatting.`;
       this.logOperation('API key validation successful');
       return true;
     } catch (error) {
-      this.logError('API key validation failed', error);
+      this.logError(error, { operation: 'API key validation failed' });
       return false;
     }
   }

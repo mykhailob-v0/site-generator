@@ -59,7 +59,7 @@ const logger = winston.createLogger({
     // Console output
     new winston.transports.Console({
       format: consoleFormat,
-      level: process.env.NODE_ENV === 'production' ? 'warn' : 'info'
+      level: 'debug' // Allow all levels through Winston, we'll filter in BaseService
     })
   ],
   
@@ -156,7 +156,41 @@ const enhancedLogger = Object.assign(logger, {
   },
   
   // Generate request ID
-  generateRequestId
+  generateRequestId,
+
+  // Update Winston logger level based on log level manager
+  updateLogLevel() {
+    try {
+      const { logLevelManager, LOG_LEVELS } = require('./log-levels');
+      const currentLevel = logLevelManager.getLevel();
+      const config = LOG_LEVELS[currentLevel];
+      
+      // Map our levels to Winston levels
+      let winstonLevel = 'warn'; // Default fallback
+      if (config.allowedTypes.includes('debug')) {
+        winstonLevel = 'debug';
+      } else if (config.allowedTypes.includes('verbose')) {
+        winstonLevel = 'verbose';
+      } else if (config.allowedTypes.includes('info')) {
+        winstonLevel = 'info';
+      } else if (config.allowedTypes.includes('warn')) {
+        winstonLevel = 'warn';
+      } else {
+        winstonLevel = 'error';
+      }
+      
+      // Update the console transport level
+      logger.transports.forEach(transport => {
+        if (transport instanceof winston.transports.Console) {
+          transport.level = winstonLevel;
+        }
+      });
+      
+      console.log(`✅ Log level updated to: ${currentLevel} (Winston: ${winstonLevel})`);
+    } catch (e) {
+      // Log levels not available yet
+    }
+  }
 });
 
 module.exports = enhancedLogger;

@@ -1,5 +1,6 @@
 const BaseService = require('../base/base.service');
 const { validateGenerationParams } = require('../../src/utils/validation');
+const { logLevelManager } = require('../../src/utils/log-levels');
 const { ValidationError } = require('../../src/utils/errors');
 const path = require('path');
 const fs = require('fs').promises;
@@ -18,12 +19,12 @@ class ValidationService extends BaseService {
       keywords: {
         minLength: 2,
         maxLength: 100,
-        allowedChars: /^[a-zA-Z0-9\s\-_.,:;!?]+$/
+        allowedChars: /^[a-zA-ZğüşıöçĞÜŞİÖÇ0-9\s\-_.,:;!?]+$/
       },
       brandName: {
         minLength: 1,
         maxLength: 50,
-        allowedChars: /^[a-zA-Z0-9\s\-_.&]+$/
+        allowedChars: /^[a-zA-ZğüşıöçĞÜŞİÖÇ0-9\s\-_.&]+$/
       },
       outputDir: {
         maxDepth: 10,
@@ -76,12 +77,29 @@ class ValidationService extends BaseService {
       // Use existing validation utility as base
       const baseValidated = validateGenerationParams(params);
       
+      // Set log level if provided
+      if (baseValidated.logLevel) {
+        logLevelManager.setLevel(baseValidated.logLevel);
+        
+        // Update Winston logger level
+        const logger = require('../../src/utils/logger');
+        if (logger.updateLogLevel) {
+          logger.updateLogLevel();
+        }
+        
+        this.log(`Log level set to: ${baseValidated.logLevel}`, 'info', {
+          logLevel: baseValidated.logLevel,
+          description: logLevelManager.getDisplayInfo()
+        });
+      }
+      
       // Additional service-level validations
       const enhanced = await this.enhanceValidation(baseValidated);
       
       this.logOperation('Validation successful', { 
         validatedParams: Object.keys(enhanced),
-        outputDir: enhanced.outputDir
+        outputDir: enhanced.outputDir,
+        logLevel: enhanced.logLevel || 'minimal'
       });
       
       return enhanced;

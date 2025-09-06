@@ -205,10 +205,8 @@ class GeneratorAPI {
    * @returns {Promise<GenerationResult>} - Complete result
    */
   async buildGenerationResult(input, orchestratorResult) {
+    // Use the outputDir as-is since it's already been processed by InputProcessor
     const outputDir = input.outputDir || './output';
-    const primaryKeyword = input.primaryKeyword.toLowerCase().replace(/[^a-z0-9]/g, '-');
-    const date = new Date().toISOString().split('T')[0];
-    const expectedOutputDir = path.join(outputDir, `${primaryKeyword}-${date}`);
 
     const result = {
       success: true,
@@ -216,27 +214,27 @@ class GeneratorAPI {
         generatedAt: new Date().toISOString(),
         primaryKeyword: input.primaryKeyword,
         brandName: input.brandName,
-        outputDirectory: expectedOutputDir
+        outputDirectory: outputDir
       }
     };
 
     // Check for generated files
     try {
-      const outputFiles = await fs.readdir(expectedOutputDir);
+      const outputFiles = await fs.readdir(outputDir);
       
       // Look for main HTML file
       const htmlFile = outputFiles.find(file => file.endsWith('.html') && !file.startsWith('raw'));
       if (htmlFile) {
-        result.outputPath = path.join(expectedOutputDir, htmlFile);
+        result.outputPath = path.join(outputDir, htmlFile);
       }
 
       // Look for raw HTML file
       const rawHtmlFile = outputFiles.find(file => file === 'raw.html');
       if (rawHtmlFile) {
-        result.rawHtmlPath = path.join(expectedOutputDir, rawHtmlFile);
+        result.rawHtmlPath = path.join(outputDir, rawHtmlFile);
       }
 
-      result.generatedFiles = outputFiles.map(file => path.join(expectedOutputDir, file));
+      result.generatedFiles = outputFiles.map(file => path.join(outputDir, file));
 
     } catch (error) {
       // Output directory doesn't exist or is empty
@@ -261,7 +259,8 @@ class GeneratorAPI {
       focusAreas: processedInput.focusAreas?.join(',') || '',
       outputDir: processedInput.outputDir,
       targetLanguage: processedInput.targetLanguage,
-      businessType: processedInput.businessType
+      businessType: processedInput.businessType,
+      logLevel: processedInput.logLevel // Pass through the log level
     };
   }
 

@@ -20,10 +20,13 @@ You are an expert SEO content strategist and web developer specializing in YMYL 
 ### Mobile-First Design Requirements
 - **Responsive design** - Must work perfectly on all device sizes (mobile, tablet, desktop)
 - **Mobile navigation** - Include hamburger menu for mobile devices with smooth transitions
+- **Desktop navigation hiding** - Desktop/main navigation MUST be hidden on mobile devices (display: none)
+- **Single navigation approach** - Only show hamburger menu on mobile, only show desktop nav on desktop
 - **Touch-friendly** - All buttons and interactive elements sized for mobile touch (min 44px)
 - **Mobile optimization** - Fast loading, minimal data usage, thumb-friendly navigation
 - **Progressive enhancement** - Desktop features that enhance mobile experience
 - **Mobile menu** - Collapsible navigation with clear section access on mobile devices
+- **Navigation breakpoint** - Use media queries to hide desktop nav below 768px and show hamburger menu
 
 ## Content Generation Task
 
@@ -121,11 +124,7 @@ Generate JSON-LD schemas:
 **For other brands**: Use the standard generated assets:
 
 ### 7. Icons and Assets (Standard)
-```html
-<link rel="icon" type="image/png" href="assets/images/favicon-{primary-keyword}.webp">
-<link rel="shortcut icon" href="assets/images/favicon-{primary-keyword}.webp">
-<link rel="apple-touch-icon" href="assets/images/favicon-{primary-keyword}.webp">
-```
+
 
 ### 8. Embedded CSS (Required)
 Include complete responsive CSS with:
@@ -137,11 +136,11 @@ Include complete responsive CSS with:
   - **Icons**: `width="32" height="32"` (feature icons, badges, nav icons)
   - **Small graphics**: `width="64" height="64"` (section icons)
   - **Campaign images**: `width="400" height="300"` (promotional banners)
-  - **Hero images**: `width="1200" height="800"` (main hero sections)
+  - **Hero images**: `width="800" height="600"` (main hero sections)
   - **Background images**: Use in CSS, not img tags
 
 **Styling requirements:**
-- **Dynamic color scheme**: Generate unique, professional color combinations for each site
+- **Dynamic color scheme**: Generate crazy unique, professional color combinations for each site
   - Choose from diverse palettes: dark themes, light themes, gradient schemes
   - Primary colors: blues, greens, purples, dark reds, or sophisticated neutrals
   - Accent colors: gold, silver, cyan, orange, or complementary choices
@@ -167,10 +166,10 @@ Include optimized functionality for:
 ## Content Quality Standards
 
 ### Writing Requirements
-- **Concise and impactful** - No unnecessary words
+- **Concise and impactful** - No unnecessary words 
 - **Keyword integration** - Natural use of {PRIMARY_KEYWORD} and {SECONDARY_KEYWORDS}
 - **Focus area emphasis** - Highlight {FOCUS_AREAS} throughout content
-- **Turkish cultural sensitivity** - Appropriate for Turkish gambling market
+- **Turkish cultural sensitivity** - Appropriate for Turkish gambling market 
 
 ### Performance Requirements (Critical)
 - **MANDATORY IMAGE SIZING**: Every `<img>` tag MUST have `width=""` and `height=""` attributes
@@ -211,7 +210,7 @@ Generate a **complete, production-ready HTML file** that:
 **CRITICAL**: ALL images must include explicit width and height attributes for optimal compression and performance:
 
 **Required Image Dimensions:**
-- **Hero images**: `width="1200" height="675"` (16:9 aspect ratio)
+- **Hero images**: `width="800" height="600"` (4:3 aspect ratio)
 - **Large feature images**: `width="600" height="400"` (3:2 aspect ratio)  
 - **Campaign images**: `width="400" height="300"` (4:3 aspect ratio)
 - **Medium icons**: `width="64" height="64"` (square icons)
@@ -220,7 +219,7 @@ Generate a **complete, production-ready HTML file** that:
 
 **Example Format:**
 ```html
-<img src="assets/images/hero-bg-{primary-keyword}.webp" width="1200" height="675" alt="Hero description">
+<img src="assets/images/hero-bg-{primary-keyword}.webp" width="800" height="600" alt="Hero description">
 <img src="assets/images/icon-security-{primary-keyword}.webp" width="64" height="64" alt="Security icon">
 <img src="assets/images/campaign-welcome-{primary-keyword}.webp" width="400" height="300" alt="Campaign description">
 ```
@@ -228,6 +227,29 @@ Generate a **complete, production-ready HTML file** that:
 **Performance Impact**: These dimensions enable smart compression - the system will optimize images to their exact display size, reducing file sizes significantly while maintaining visual quality.
 
 ### CSS Performance Standards
+**Navigation Responsive Requirements (CRITICAL):**
+```css
+/* Desktop navigation - hidden on mobile */
+.desktop-nav {
+  display: block;
+}
+
+/* Mobile hamburger menu - hidden on desktop */
+.mobile-menu-toggle {
+  display: none;
+}
+
+/* Mobile breakpoint - hide desktop nav, show mobile menu */
+@media (max-width: 767px) {
+  .desktop-nav {
+    display: none !important;
+  }
+  .mobile-menu-toggle {
+    display: block;
+  }
+}
+```
+
 **Font Stacks (Use ONLY these - no external imports):**
 ```css
 /* Primary text - modern system fonts */
@@ -246,6 +268,9 @@ font-family: ui-monospace, 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Co
 - Define explicit dimensions for all images and containers
 - Minimize CSS selectors and avoid complex selectors
 - Use CSS Grid/Flexbox efficiently to prevent layout shifts
+- **CRITICAL**: Implement proper responsive navigation - hide desktop nav on mobile, show only hamburger menu
+- Use media queries to ensure single navigation approach per device type
+
 
 ## Variables to Replace
 

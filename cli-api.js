@@ -36,6 +36,7 @@ program
   .option('-tl, --target-language <lang>', 'Target language code', 'tr')
   .option('-bt, --business-type <type>', 'Type of business', 'online betting platform')
   .option('-od, --output-dir <dir>', 'Output directory', './output')
+  .option('-ll, --log-level <level>', 'Log verbosity level (minimal, standard, detailed, debug)', 'minimal')
   .action(async (options) => {
     console.log('🚀 Starting HTML generation with abstracted input system...');
     
@@ -60,7 +61,8 @@ program
         focusAreas: options.focusAreas,
         targetLanguage: options.targetLanguage,
         businessType: options.businessType,
-        outputDir: options.outputDir
+        outputDir: options.outputDir,
+        logLevel: options.logLevel
       };
 
       console.log('📋 Raw Input:', rawInput);

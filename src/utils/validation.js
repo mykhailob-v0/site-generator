@@ -1,5 +1,6 @@
 const validator = require('validator');
 const { ValidationError } = require('./errors');
+const { InputProcessor } = require('../../services/input/input-processor.service');
 
 /**
  * Input validation utilities
@@ -209,24 +210,11 @@ const validateApiKey = (apiKey) => {
 };
 
 /**
- * Comprehensive input validation
+ * Comprehensive input validation using InputProcessor
  */
 const validateGenerationParams = (params) => {
-  const validated = {
-    primaryKeyword: validatePrimaryKeyword(params.primaryKeyword),
-    canonicalUrl: validateCanonicalUrl(params.canonicalUrl),
-    hreflangUrls: validateHreflangUrls(params.hreflangUrls),
-    secondaryKeywords: validateSecondaryKeywords(params.secondaryKeywords),
-    focusAreas: validateFocusAreas(params.focusAreas),
-    brandName: validateBrandName(params.brandName)
-  };
-  
-  // Optional parameters
-  if (params.outputDir) {
-    validated.outputDir = params.outputDir.trim();
-  }
-  
-  return validated;
+  const processor = new InputProcessor();
+  return processor.process(params);
 };
 
 /**

@@ -19,6 +19,7 @@
  * @property {Object} [seoSettings] - Advanced SEO configuration
  * @property {Object} [designPreferences] - Design and layout preferences
  * @property {Object} [contentSettings] - Content generation settings
+ * @property {string} [logLevel] - Log verbosity level ('minimal', 'standard', 'detailed', 'debug')
  */
 
 /**
@@ -48,7 +49,8 @@ class InputProcessor {
         length: 'comprehensive',
         includeTestimonials: true,
         includeFAQ: true
-      }
+      },
+      logLevel: 'minimal' // Default to minimal logging for better UX
     };
 
     this.requiredFields = ['primaryKeyword', 'brandName', 'canonicalUrl', 'hreflangUrls'];
@@ -85,6 +87,10 @@ class InputProcessor {
       },
       targetLanguage: {
         allowedValues: ['tr', 'en', 'de', 'fr', 'es', 'ru']
+      },
+      logLevel: {
+        allowedValues: ['minimal', 'standard', 'detailed', 'debug'],
+        default: 'minimal'
       }
     };
   }
@@ -240,8 +246,11 @@ class InputProcessor {
       .replace(/[^a-z0-9]/g, '-')
       .substring(0, 20);
     
-    enriched.outputDir = enriched.outputDir.replace('./output', 
-      `./output/${cleanKeyword}-${date}`);
+    // Only modify the output directory if it's the default './output'
+    // Otherwise, use the provided directory as-is to avoid duplication
+    if (enriched.outputDir === './output') {
+      enriched.outputDir = `./output/${cleanKeyword}-${date}`;
+    }
 
     // Add metadata
     enriched._metadata = {

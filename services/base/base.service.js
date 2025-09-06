@@ -4,6 +4,7 @@
  */
 
 const logger = require('../../src/utils/logger');
+const { logLevelManager } = require('../../src/utils/log-levels');
 const ErrorUtils = require('../../src/utils/errors');
 
 class BaseService {
@@ -21,9 +22,14 @@ class BaseService {
   }
 
   /**
-   * Log message with service context
+   * Log message with service context (respects log level settings)
    */
   log(message, level = 'info', data = {}) {
+    // Check if this log level should be shown
+    if (!logLevelManager.shouldLog(level)) {
+      return;
+    }
+
     const logData = {
       service: this.serviceName,
       timestamp: new Date().toISOString(),
@@ -50,18 +56,21 @@ class BaseService {
   }
 
   /**
-   * Log performance metrics
+   * Log performance metrics (only if performance logging is enabled)
    */
   logPerformance(operation, duration, metadata = {}) {
     this.metrics.calls++;
     this.metrics.totalDuration += duration;
 
-    this.log(`${operation} completed in ${duration}ms`, 'info', {
-      operation,
-      duration,
-      averageDuration: Math.round(this.metrics.totalDuration / this.metrics.calls),
-      ...metadata
-    });
+    // Only log performance details if the current level allows it
+    if (logLevelManager.shouldLogPerformance()) {
+      this.log(`${operation} completed in ${duration}ms`, 'verbose', {
+        operation,
+        duration,
+        averageDuration: Math.round(this.metrics.totalDuration / this.metrics.calls),
+        ...metadata
+      });
+    }
   }
 
   /**
@@ -188,14 +197,16 @@ class BaseService {
   }
 
   /**
-   * Log operation with context
+   * Log operation with context (only if operation logging is enabled)
    */
   logOperation(operation, data = {}) {
-    this.log(`Operation: ${operation}`, 'info', {
-      operation,
-      requestId: this.currentRequestId,
-      ...data
-    });
+    if (logLevelManager.shouldLogOperations()) {
+      this.log(`Operation: ${operation}`, 'info', {
+        operation,
+        requestId: this.currentRequestId,
+        ...data
+      });
+    }
   }
 
   /**
