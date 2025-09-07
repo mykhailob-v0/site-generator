@@ -244,7 +244,6 @@ class InputProcessor {
     const cleanKeyword = input.primaryKeyword
       .toLowerCase()
       .replace(/[^a-z0-9]/g, '-')
-      .substring(0, 20);
     
     // Only modify the output directory if it's the default './output'
     // Otherwise, use the provided directory as-is to avoid duplication

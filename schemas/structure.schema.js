@@ -19,7 +19,28 @@ const SectionType = z.enum([
   'reviews',
   'contact',
   'responsible_gambling',
-  'licensing'
+  'licensing',
+  // New diverse sections
+  'success_stories',
+  'statistics_showcase',
+  'expert_analysis',
+  'trending_games',
+  'community_feed',
+  'tournament_calendar',
+  'odds_comparison',
+  'live_results',
+  'betting_tips',
+  'news_updates',
+  'social_proof',
+  'achievements_gallery',
+  'interactive_demo',
+  'quick_bet_panel',
+  'loyalty_tiers',
+  'referral_program',
+  'brand_story',
+  'innovation_showcase',
+  'seasonal_promotions',
+  'regional_highlights'
 ]).describe('Type of website section');
 
 const FeatureType = z.enum([
@@ -41,7 +62,32 @@ const FeatureType = z.enum([
   'in_play_betting',
   'casino_variety',
   'live_dealers',
-  'game_providers'
+  'game_providers',
+  // New diverse features
+  'ai_powered_recommendations',
+  'voice_betting',
+  'augmented_reality_games',
+  'blockchain_transparency',
+  'biometric_security',
+  'instant_kyc_verification',
+  'social_betting_features',
+  'predictive_analytics',
+  'custom_betting_interface',
+  'multi_language_support',
+  'adaptive_odds_display',
+  'automated_cashout_rules',
+  'betting_history_analysis',
+  'risk_management_tools',
+  'tournament_creation',
+  'leaderboard_systems',
+  'achievement_badges',
+  'personalized_dashboard',
+  'cross_platform_sync',
+  'offline_mode_support',
+  'smart_notifications',
+  'weather_integration',
+  'news_feed_betting',
+  'celebrity_tips_integration'
 ]).describe('Type of feature to highlight');
 
 const CampaignType = z.enum([
@@ -58,7 +104,32 @@ const CampaignType = z.enum([
   'monthly_promotions',
   'tournament_bonuses',
   'referral_bonus',
-  'mobile_bonus'
+  'mobile_bonus',
+  // New diverse campaigns
+  'birthday_bonus',
+  'anniversary_rewards',
+  'seasonal_campaigns',
+  'weather_based_bets',
+  'social_media_challenges',
+  'prediction_contests',
+  'charity_betting_events',
+  'celebrity_match_bonuses',
+  'early_bird_specials',
+  'late_night_bonuses',
+  'weekend_warriors',
+  'milestone_achievements',
+  'comeback_bonuses',
+  'perfect_week_rewards',
+  'community_jackpots',
+  'regional_pride_bets',
+  'underdog_support_bonus',
+  'streak_breaker_rewards',
+  'new_game_launch_bonus',
+  'loyalty_tier_upgrades',
+  'friend_challenge_bets',
+  'expert_tipster_rewards',
+  'lucky_number_bonuses',
+  'time_limited_flash_deals'
 ]).describe('Type of campaign or bonus offer');
 
 const FAQCategory = z.enum([
@@ -88,7 +159,23 @@ const ContentFocus = z.enum([
   'payment_convenience',
   'live_betting',
   'user_experience',
-  'regulatory_compliance'
+  'regulatory_compliance',
+  // New diverse focus areas
+  'innovation_technology',
+  'community_engagement',
+  'expert_insights',
+  'entertainment_value',
+  'social_responsibility',
+  'educational_content',
+  'personalization',
+  'gamification',
+  'sustainability',
+  'cultural_relevance',
+  'accessibility',
+  'transparency',
+  'performance_optimization',
+  'data_analytics',
+  'lifestyle_integration'
 ]).describe('Primary content focus area');
 
 const SEOFocus = z.enum([
@@ -117,7 +204,38 @@ const UniqueElement = z.enum([
   'responsible_gambling_tools',
   'social_proof_elements',
   'trust_pilot_reviews',
-  'industry_awards_showcase'
+  'industry_awards_showcase',
+  // New unique elements for diversity
+  'interactive_game_showcase',
+  'virtual_reality_preview',
+  'ai_betting_assistant',
+  'personalized_odds_feed',
+  'social_betting_wall',
+  'expert_prediction_panel',
+  'live_event_tracker',
+  'achievement_progress_bar',
+  'community_leaderboards',
+  'weather_based_betting',
+  'celebrity_endorsements',
+  'cultural_celebration_themes',
+  'seasonal_design_variants',
+  'motivational_quote_carousel',
+  'success_story_timeline',
+  'brand_mascot_integration',
+  'interactive_tutorials',
+  'gamified_onboarding',
+  'loyalty_point_visualizer',
+  'mood_based_recommendations',
+  'time_zone_localization',
+  'regional_sports_focus',
+  'charity_partnership_showcase',
+  'environmental_commitment_badge',
+  'accessibility_features_highlight',
+  'multi_generational_appeal',
+  'tech_innovation_spotlight',
+  'behind_scenes_content',
+  'user_generated_content_feed',
+  'predictive_trend_analysis'
 ]).describe('Unique website elements to include');
 
 // Main structure schema
@@ -151,8 +269,17 @@ const GamblingWebsiteStructure = z.object({
     content_emphasis: z.object({
       primary_focus: ContentFocus.describe('Main content focus throughout site'),
       secondary_focus: ContentFocus.describe('Secondary content focus'),
-      tone: z.enum(['trustworthy_professional', 'exciting_dynamic', 'secure_reliable', 'user_friendly_approachable']).describe('Content tone and style')
-    }).describe('Overall content strategy')
+      tone: z.enum(['trustworthy_professional', 'exciting_dynamic', 'secure_reliable', 'user_friendly_approachable', 'innovative_cutting_edge', 'community_driven', 'luxury_premium', 'fun_entertainment', 'educational_informative', 'culturally_relevant']).describe('Content tone and style'),
+      personality: z.enum(['authoritative_expert', 'friendly_guide', 'tech_innovator', 'community_builder', 'trusted_advisor', 'entertainment_host', 'performance_coach', 'cultural_ambassador']).describe('Brand personality'),
+      visual_style: z.enum(['modern_minimalist', 'bold_vibrant', 'classic_elegant', 'tech_futuristic', 'warm_inviting', 'premium_luxury', 'playful_colorful', 'dark_professional']).describe('Visual design direction')
+    }).describe('Overall content strategy'),
+
+    diversity_factors: z.object({
+      cultural_adaptation: z.enum(['local_sports_focus', 'regional_payment_methods', 'cultural_celebrations', 'local_language_nuances', 'traditional_games_integration']).describe('Cultural localization elements'),
+      innovation_level: z.enum(['conservative_traditional', 'moderate_evolution', 'progressive_innovation', 'cutting_edge_experimental']).describe('Technology and feature innovation level'),
+      target_demographic: z.enum(['young_tech_savvy', 'experienced_bettors', 'casual_entertainment', 'professional_traders', 'social_community', 'mobile_first_users']).describe('Primary target audience'),
+      engagement_style: z.enum(['information_heavy', 'visual_storytelling', 'interactive_experience', 'social_community', 'gamified_journey', 'personalized_approach']).describe('User engagement approach')
+    }).describe('Factors that make this site unique and diverse')
   }).describe('Website structure configuration'),
 
   seo_strategy: z.object({
@@ -189,7 +316,7 @@ const GamblingWebsiteStructureSchema = {
             properties: {
               name: {
                 type: "string",
-                enum: ["hero", "about", "features", "security", "mobile", "sports_betting", "casino_games", "live_betting", "campaigns", "bonuses", "vip_program", "payment_methods", "faq", "testimonials", "reviews", "contact", "responsible_gambling", "licensing"],
+                enum: ["hero", "about", "features", "security", "mobile", "sports_betting", "casino_games", "live_betting", "campaigns", "bonuses", "vip_program", "payment_methods", "faq", "testimonials", "reviews", "contact", "responsible_gambling", "licensing", "success_stories", "statistics_showcase", "expert_analysis", "trending_games", "community_feed", "tournament_calendar", "odds_comparison", "live_results", "betting_tips", "news_updates", "social_proof", "achievements_gallery", "interactive_demo", "quick_bet_panel", "loyalty_tiers", "referral_program", "brand_story", "innovation_showcase", "seasonal_promotions", "regional_highlights"],
                 description: "Type of website section"
               },
               priority: {
@@ -204,7 +331,7 @@ const GamblingWebsiteStructureSchema = {
               },
               focus: {
                 type: "string",
-                enum: ["security_trust", "mobile_experience", "bonus_rewards", "sports_betting", "casino_gaming", "customer_service", "payment_convenience", "live_betting", "user_experience", "regulatory_compliance"],
+                enum: ["security_trust", "mobile_experience", "bonus_rewards", "sports_betting", "casino_gaming", "customer_service", "payment_convenience", "live_betting", "user_experience", "regulatory_compliance", "innovation_technology", "community_engagement", "expert_insights", "entertainment_value", "social_responsibility", "educational_content", "personalization", "gamification", "sustainability", "cultural_relevance", "accessibility", "transparency", "performance_optimization", "data_analytics", "lifestyle_integration"],
                 description: "Content focus for this section"
               }
             },
@@ -224,7 +351,7 @@ const GamblingWebsiteStructureSchema = {
             },
             focus: {
               type: "string",
-              enum: ["security_trust", "mobile_experience", "bonus_rewards", "sports_betting", "casino_gaming", "customer_service", "payment_convenience", "live_betting", "user_experience", "regulatory_compliance"],
+              enum: ["security_trust", "mobile_experience", "bonus_rewards", "sports_betting", "casino_gaming", "customer_service", "payment_convenience", "live_betting", "user_experience", "regulatory_compliance", "innovation_technology", "community_engagement", "expert_insights", "entertainment_value", "social_responsibility", "educational_content", "personalization", "gamification", "sustainability", "cultural_relevance", "accessibility", "transparency", "performance_optimization", "data_analytics", "lifestyle_integration"],
               description: "Primary focus for feature selection"
             },
             types: {
@@ -234,7 +361,7 @@ const GamblingWebsiteStructureSchema = {
               maxItems: 8,
               items: {
                 type: "string",
-                enum: ["ssl_security", "data_encryption", "license_verification", "mobile_optimization", "mobile_app", "responsive_design", "payment_security", "fast_withdrawals", "multiple_payment_methods", "customer_support", "live_chat", "24_7_support", "odds_quality", "live_streaming", "cash_out", "in_play_betting", "casino_variety", "live_dealers", "game_providers"]
+                enum: ["ssl_security", "data_encryption", "license_verification", "mobile_optimization", "mobile_app", "responsive_design", "payment_security", "fast_withdrawals", "multiple_payment_methods", "customer_support", "live_chat", "24_7_support", "odds_quality", "live_streaming", "cash_out", "in_play_betting", "casino_variety", "live_dealers", "game_providers", "ai_powered_recommendations", "voice_betting", "augmented_reality_games", "blockchain_transparency", "biometric_security", "instant_kyc_verification", "social_betting_features", "predictive_analytics", "custom_betting_interface", "multi_language_support", "adaptive_odds_display", "automated_cashout_rules", "betting_history_analysis", "risk_management_tools", "tournament_creation", "leaderboard_systems", "achievement_badges", "personalized_dashboard", "cross_platform_sync", "offline_mode_support", "smart_notifications", "weather_integration", "news_feed_betting", "celebrity_tips_integration"]
               }
             }
           },
@@ -253,7 +380,7 @@ const GamblingWebsiteStructureSchema = {
             },
             focus: {
               type: "string",
-              enum: ["security_trust", "mobile_experience", "bonus_rewards", "sports_betting", "casino_gaming", "customer_service", "payment_convenience", "live_betting", "user_experience", "regulatory_compliance"],
+              enum: ["security_trust", "mobile_experience", "bonus_rewards", "sports_betting", "casino_gaming", "customer_service", "payment_convenience", "live_betting", "user_experience", "regulatory_compliance", "innovation_technology", "community_engagement", "expert_insights", "entertainment_value", "social_responsibility", "educational_content", "personalization", "gamification", "sustainability", "cultural_relevance", "accessibility", "transparency", "performance_optimization", "data_analytics", "lifestyle_integration"],
               description: "Campaign focus area"
             },
             types: {
@@ -263,7 +390,7 @@ const GamblingWebsiteStructureSchema = {
               maxItems: 6,
               items: {
                 type: "string",
-                enum: ["welcome_bonus", "first_deposit_bonus", "reload_bonus", "cashback_bonus", "free_bets", "accumulator_bonus", "vip_program", "loyalty_rewards", "daily_promotions", "weekly_promotions", "monthly_promotions", "tournament_bonuses", "referral_bonus", "mobile_bonus"]
+                enum: ["welcome_bonus", "first_deposit_bonus", "reload_bonus", "cashback_bonus", "free_bets", "accumulator_bonus", "vip_program", "loyalty_rewards", "daily_promotions", "weekly_promotions", "monthly_promotions", "tournament_bonuses", "referral_bonus", "mobile_bonus", "birthday_bonus", "anniversary_rewards", "seasonal_campaigns", "weather_based_bets", "social_media_challenges", "prediction_contests", "charity_betting_events", "celebrity_match_bonuses", "early_bird_specials", "late_night_bonuses", "weekend_warriors", "milestone_achievements", "comeback_bonuses", "perfect_week_rewards", "community_jackpots", "regional_pride_bets", "underdog_support_bonus", "streak_breaker_rewards", "new_game_launch_bonus", "loyalty_tier_upgrades", "friend_challenge_bets", "expert_tipster_rewards", "lucky_number_bonuses", "time_limited_flash_deals"]
               }
             }
           },
@@ -292,7 +419,7 @@ const GamblingWebsiteStructureSchema = {
             },
             primary_focus: {
               type: "string",
-              enum: ["security_trust", "mobile_experience", "bonus_rewards", "sports_betting", "casino_gaming", "customer_service", "payment_convenience", "live_betting", "user_experience", "regulatory_compliance"],
+              enum: ["security_trust", "mobile_experience", "bonus_rewards", "sports_betting", "casino_gaming", "customer_service", "payment_convenience", "live_betting", "user_experience", "regulatory_compliance", "innovation_technology", "community_engagement", "expert_insights", "entertainment_value", "social_responsibility", "educational_content", "personalization", "gamification", "sustainability", "cultural_relevance", "accessibility", "transparency", "performance_optimization", "data_analytics", "lifestyle_integration"],
               description: "Primary focus for FAQ content"
             }
           },
@@ -305,25 +432,63 @@ const GamblingWebsiteStructureSchema = {
           properties: {
             primary_focus: {
               type: "string",
-              enum: ["security_trust", "mobile_experience", "bonus_rewards", "sports_betting", "casino_gaming", "customer_service", "payment_convenience", "live_betting", "user_experience", "regulatory_compliance"],
+              enum: ["security_trust", "mobile_experience", "bonus_rewards", "sports_betting", "casino_gaming", "customer_service", "payment_convenience", "live_betting", "user_experience", "regulatory_compliance", "innovation_technology", "community_engagement", "expert_insights", "entertainment_value", "social_responsibility", "educational_content", "personalization", "gamification", "sustainability", "cultural_relevance", "accessibility", "transparency", "performance_optimization", "data_analytics", "lifestyle_integration"],
               description: "Main content focus throughout site"
             },
             secondary_focus: {
               type: "string",
-              enum: ["security_trust", "mobile_experience", "bonus_rewards", "sports_betting", "casino_gaming", "customer_service", "payment_convenience", "live_betting", "user_experience", "regulatory_compliance"],
+              enum: ["security_trust", "mobile_experience", "bonus_rewards", "sports_betting", "casino_gaming", "customer_service", "payment_convenience", "live_betting", "user_experience", "regulatory_compliance", "innovation_technology", "community_engagement", "expert_insights", "entertainment_value", "social_responsibility", "educational_content", "personalization", "gamification", "sustainability", "cultural_relevance", "accessibility", "transparency", "performance_optimization", "data_analytics", "lifestyle_integration"],
               description: "Secondary content focus"
             },
             tone: {
               type: "string",
-              enum: ["trustworthy_professional", "exciting_dynamic", "secure_reliable", "user_friendly_approachable"],
+              enum: ["trustworthy_professional", "exciting_dynamic", "secure_reliable", "user_friendly_approachable", "innovative_cutting_edge", "community_driven", "luxury_premium", "fun_entertainment", "educational_informative", "culturally_relevant"],
               description: "Content tone and style"
+            },
+            personality: {
+              type: "string",
+              enum: ["authoritative_expert", "friendly_guide", "tech_innovator", "community_builder", "trusted_advisor", "entertainment_host", "performance_coach", "cultural_ambassador"],
+              description: "Brand personality"
+            },
+            visual_style: {
+              type: "string",
+              enum: ["modern_minimalist", "bold_vibrant", "classic_elegant", "tech_futuristic", "warm_inviting", "premium_luxury", "playful_colorful", "dark_professional"],
+              description: "Visual design direction"
             }
           },
-          required: ["primary_focus", "secondary_focus", "tone"],
+          required: ["primary_focus", "secondary_focus", "tone", "personality", "visual_style"],
+          additionalProperties: false
+        },
+        diversity_factors: {
+          type: "object",
+          description: "Factors that make this site unique and diverse",
+          properties: {
+            cultural_adaptation: {
+              type: "string",
+              enum: ["local_sports_focus", "regional_payment_methods", "cultural_celebrations", "local_language_nuances", "traditional_games_integration"],
+              description: "Cultural localization elements"
+            },
+            innovation_level: {
+              type: "string",
+              enum: ["conservative_traditional", "moderate_evolution", "progressive_innovation", "cutting_edge_experimental"],
+              description: "Technology and feature innovation level"
+            },
+            target_demographic: {
+              type: "string",
+              enum: ["young_tech_savvy", "experienced_bettors", "casual_entertainment", "professional_traders", "social_community", "mobile_first_users"],
+              description: "Primary target audience"
+            },
+            engagement_style: {
+              type: "string",
+              enum: ["information_heavy", "visual_storytelling", "interactive_experience", "social_community", "gamified_journey", "personalized_approach"],
+              description: "User engagement approach"
+            }
+          },
+          required: ["cultural_adaptation", "innovation_level", "target_demographic", "engagement_style"],
           additionalProperties: false
         }
       },
-      required: ["sections", "features", "campaigns", "faq", "content_emphasis"],
+      required: ["sections", "features", "campaigns", "faq", "content_emphasis", "diversity_factors"],
       additionalProperties: false
     },
     seo_strategy: {
@@ -359,7 +524,7 @@ const GamblingWebsiteStructureSchema = {
       maxItems: 5,
       items: {
         type: "string",
-        enum: ["security_certification_showcase", "mobile_app_download_section", "live_chat_integration", "odds_comparison_tool", "betting_calculator", "live_scores_widget", "game_demo_section", "winner_testimonials", "payment_security_badges", "regulatory_compliance_section", "responsible_gambling_tools", "social_proof_elements", "trust_pilot_reviews", "industry_awards_showcase"]
+        enum: ["security_certification_showcase", "mobile_app_download_section", "live_chat_integration", "odds_comparison_tool", "betting_calculator", "live_scores_widget", "game_demo_section", "winner_testimonials", "payment_security_badges", "regulatory_compliance_section", "responsible_gambling_tools", "social_proof_elements", "trust_pilot_reviews", "industry_awards_showcase", "interactive_game_showcase", "virtual_reality_preview", "ai_betting_assistant", "personalized_odds_feed", "social_betting_wall", "expert_prediction_panel", "live_event_tracker", "achievement_progress_bar", "community_leaderboards", "weather_based_betting", "celebrity_endorsements", "cultural_celebration_themes", "seasonal_design_variants", "motivational_quote_carousel", "success_story_timeline", "brand_mascot_integration", "interactive_tutorials", "gamified_onboarding", "loyalty_point_visualizer", "mood_based_recommendations", "time_zone_localization", "regional_sports_focus", "charity_partnership_showcase", "environmental_commitment_badge", "accessibility_features_highlight", "multi_generational_appeal", "tech_innovation_spotlight", "behind_scenes_content", "user_generated_content_feed", "predictive_trend_analysis"]
       }
     },
     reasoning: {

@@ -140,7 +140,7 @@ Design a helpful illustration for an FAQ section of a betting website. Include:
 
 ### 5. Contact Section Visuals
 **Purpose**: Customer service and contact imagery
-**Specifications**: 600x400px, professional service imagery
+**Specifications**: 400x400px, professional service imagery
 **Style**: Professional, accessible, trustworthy
 
 **Customer Service Illustration**:

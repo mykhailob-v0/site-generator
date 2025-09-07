@@ -3,6 +3,8 @@ const OpenAI = require('openai');
 const PromptService = require('../utilities/prompt.service');
 const { OpenAIError } = require('../../src/utils/errors');
 const { GamblingWebsiteStructureSchema } = require('../../schemas/structure.schema');
+const fs = require('fs').promises;
+const path = require('path');
 
 /**
  * Structure Service
@@ -19,7 +21,6 @@ class StructureService extends AIServiceInterface {
     this.config = {
       maxRetries: 3,
       timeout: 60000,
-      temperature: 0.7,
       maxTokens: 128000,
       promptsDirectory: config.promptsDirectory || './prompts',
       ...config
@@ -76,6 +77,11 @@ class StructureService extends AIServiceInterface {
 
       const structure = this.parseStructureResponse(response);
       const duration = Date.now() - startTime;
+
+      // Save structure to debug file if outputDir is available
+      if (params.outputDir) {
+        await this.saveStructureDebugFile(structure, params.outputDir, params.primaryKeyword);
+      }
 
       // Update usage statistics
       this.updateUsageStats({
@@ -135,6 +141,26 @@ class StructureService extends AIServiceInterface {
     });
 
     try {
+      // Import schema enums to include in prompt
+      const {
+        SectionType,
+        FeatureType,
+        CampaignType,
+        FAQCategory,
+        ContentFocus,
+        UniqueElement
+      } = require('../../schemas/structure.schema');
+
+      // Extract enum values for prompt
+      const availableOptions = {
+        sections: SectionType.options.join(', '),
+        features: FeatureType.options.join(', '),
+        campaigns: CampaignType.options.join(', '),
+        faqCategories: FAQCategory.options.join(', '),
+        contentFocus: ContentFocus.options.join(', '),
+        uniqueElements: UniqueElement.options.join(', ')
+      };
+
       // Use the professional structure generation prompt template
       const prompt = await this.promptService.getStructureGenerationPrompt({
         primaryKeyword: params.primaryKeyword,
@@ -143,12 +169,22 @@ class StructureService extends AIServiceInterface {
         focusAreas: params.focusAreas || ['güvenlik', 'mobil', 'bonus'],
         targetAudience: 'Turkish betting enthusiasts',
         businessType: 'online betting platform',
-        contentType: 'landing page'
+        contentType: 'landing page',
+        // Include all available schema options
+        AVAILABLE_SECTIONS: availableOptions.sections,
+        AVAILABLE_FEATURES: availableOptions.features,
+        AVAILABLE_CAMPAIGNS: availableOptions.campaigns,
+        AVAILABLE_FAQ_CATEGORIES: availableOptions.faqCategories,
+        AVAILABLE_CONTENT_FOCUS: availableOptions.contentFocus,
+        AVAILABLE_UNIQUE_ELEMENTS: availableOptions.uniqueElements
       });
 
       this.logOperation('Structure prompt built from template', {
         promptLength: prompt.length,
-        templateUsed: 'structure-generation-prompt'
+        templateUsed: 'structure-generation-prompt',
+        sectionsAvailable: SectionType.options.length,
+        featuresAvailable: FeatureType.options.length,
+        campaignsAvailable: CampaignType.options.length
       });
 
       return prompt;
@@ -397,6 +433,61 @@ Return only valid JSON without markdown formatting.`;
   }
 
   /**
+   * Save structure to debug file for inspection
+   * @param {object} structure - The parsed structure from AI API
+   * @param {string} outputDir - Output directory path
+   * @param {string} primaryKeyword - Primary keyword for filename
+   */
+  async saveStructureDebugFile(structure, outputDir, primaryKeyword) {
+    try {
+      // Create the output directory if it doesn't exist
+      await fs.mkdir(outputDir, { recursive: true });
+      
+      // Create sanitized filename based on primary keyword
+      const sanitizedKeyword = primaryKeyword
+        .toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '');
+      
+      const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+      const filename = `structure-${sanitizedKeyword}-${timestamp}.json`;
+      const filePath = path.join(outputDir, filename);
+      
+      // Create debug structure with metadata
+      const debugStructure = {
+        metadata: {
+          timestamp: new Date().toISOString(),
+          primaryKeyword,
+          model: this.model,
+          source: 'AI_API_RESPONSE',
+          note: 'This is the raw structure parsed from OpenAI API response for debugging purposes'
+        },
+        structure
+      };
+      
+      // Save to file
+      await fs.writeFile(filePath, JSON.stringify(debugStructure, null, 2), 'utf8');
+      
+      this.logOperation('Structure debug file saved', {
+        filePath,
+        primaryKeyword,
+        structureKeys: Object.keys(structure),
+        sectionsCount: structure.structure?.sections?.length || 0
+      });
+      
+    } catch (error) {
+      this.logError(error, {
+        operation: 'saveStructureDebugFile',
+        outputDir,
+        primaryKeyword
+      });
+      // Don't throw error - this is just for debugging, shouldn't break the workflow
+    }
+  }
+
+  /**
    * Validate structured output against schema requirements
    * @param {object} structure - Structure to validate
    */
@@ -473,6 +564,7 @@ Return only valid JSON without markdown formatting.`;
    * @returns {object} - Default structure following schema
    */
   getDefaultStructure() {
+    console.warn('Using default structure due to parsing failure');
     return {
       structure: {
         sections: [

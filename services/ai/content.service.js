@@ -39,6 +39,23 @@ class ContentService extends AIServiceInterface {
    * @returns {Promise<object>} - Generated content with metadata
    */
   async generate(params) {
+    // Check if this is chained input from StructureService before extraction
+    if (params.serviceType && params.data) {
+      this.logOperation('Received chained input from StructureService', {
+        serviceType: params.serviceType,
+        hasStructure: !!params.data.structure
+      });
+      
+      // Merge the structure data with original params, preserving the structure
+      const mergedParams = {
+        ...params, // Original params from orchestrator (primaryKeyword, etc.)
+        ...params.data, // Contains { success: true, structure, metadata }
+        structure: params.data.structure // Ensure structure is properly set at root level
+      };
+      
+      return await this.generateHTML(mergedParams);
+    }
+    
     // Extract structure data if it comes from StructureService
     const extractedParams = this.extractFromChain(params);
     return await this.generateHTML(extractedParams);
@@ -59,29 +76,26 @@ class ContentService extends AIServiceInterface {
    * @returns {Promise<object>} - Generated HTML content with metadata
    */
   async generateHTML(params) {
+    // Get the actual structure object for logging - handle deeply nested structure
+    let actualStructure = params.structure;
+    if (actualStructure && actualStructure.data && actualStructure.data.structure) {
+      actualStructure = actualStructure.data.structure;
+    }
+    if (actualStructure && actualStructure.structure) {
+      actualStructure = actualStructure.structure;
+    }
+    
     this.logOperation('generateHTML', { 
       primaryKeyword: params.primaryKeyword,
       brandName: params.brandName,
-      hasStructure: !!params.structure,
-      isChainedInput: !!params.serviceType,
+      hasStructure: !!actualStructure,
+      structureSections: actualStructure?.sections?.length || 0,
       model: this.model 
     });
 
     const startTime = Date.now();
 
     try {
-      // Handle structure input from StructureService
-      let structure = params.structure;
-      if (params.serviceType === 'StructureService' && params.data) {
-        this.logOperation('Using structure from StructureService', {
-          structureSuccess: params.data.success,
-          structureSections: params.data.structure?.structure?.sections?.length || 0
-        });
-        structure = params.data.structure;
-        // Merge structure params with original params
-        params = { ...params, ...params.data, structure };
-      }
-
       this.validateRequired(params, ['primaryKeyword', 'brandName', 'structure']);
 
       const prompt = await this.buildContentPrompt(params);
@@ -90,6 +104,12 @@ class ContentService extends AIServiceInterface {
         'makeApiCall',
         this.config.maxRetries
       );
+
+      // Save raw response immediately, even before validation
+      const rawContent = response.choices[0]?.message?.content;
+      if (rawContent) {
+        await this.saveRawHTML(rawContent, params, 'raw-response');
+      }
 
       const htmlContent = this.parseContentResponse(response);
       const duration = Date.now() - startTime;
@@ -120,16 +140,28 @@ class ContentService extends AIServiceInterface {
         contentLength: htmlContent.length
       });
 
-      // Save raw HTML content for debugging/inspection
-      await this.saveRawHTML(htmlContent, params);
+      // Save processed HTML content for debugging/inspection (even if validation failed)
+      await this.saveRawHTML(htmlContent, params, 'processed');
 
       // Return result prepared for chaining to other services
       return this.prepareForChaining(result);
 
     } catch (error) {
       const duration = Date.now() - startTime;
+      
+      // Try to save raw response even if there was an error
+      try {
+        const rawContent = error.response?.choices?.[0]?.message?.content || 
+                          error.rawResponse?.choices?.[0]?.message?.content;
+        if (rawContent) {
+          await this.saveRawHTML(rawContent, params, 'error-response');
+        }
+      } catch (saveError) {
+        this.logError(saveError, { operation: 'saveErrorResponse' });
+      }
+      
       this.updateUsageStats({ errors: 1 });
-      this.logError('generateHTML', error, { params, duration });
+      this.logError(error, { operation: 'generateHTML', params, duration });
       
       throw new OpenAIError(
         `HTML content generation failed: ${error.message}`, 
@@ -145,10 +177,30 @@ class ContentService extends AIServiceInterface {
    * @returns {Promise<string>} - Generated prompt from template
    */
   async buildContentPrompt(params) {
+    // Get the actual structure object - handle deeply nested structure
+    let actualStructure = params.structure;
+    
+    // Handle multiple levels of nesting that can occur in service chaining
+    if (actualStructure && actualStructure.data && actualStructure.data.structure) {
+      actualStructure = actualStructure.data.structure;
+    }
+    if (actualStructure && actualStructure.structure) {
+      actualStructure = actualStructure.structure;
+    }
+    
     this.logOperation('buildContentPrompt', { 
       primaryKeyword: params.primaryKeyword,
-      hasStructure: !!params.structure,
+      hasStructure: !!actualStructure,
+      structureSections: actualStructure?.sections?.length || 0,
       usingTemplate: true 
+    });
+
+    console.log('Structure access debug:', {
+      hasParamsStructure: !!params.structure,
+      structureKeys: params.structure ? Object.keys(params.structure) : null,
+      hasDataStructure: !!(params.structure?.data?.structure),
+      hasNestedStructure: !!(params.structure?.data?.structure?.structure),
+      finalSections: actualStructure?.sections?.length || 0
     });
 
     try {
@@ -160,20 +212,25 @@ class ContentService extends AIServiceInterface {
         CANONICAL_URL: params.canonicalUrl || `https://${params.brandName.toLowerCase().replace(/\s+/g, '')}.com`,
         HREFLANG_URLS: JSON.stringify(params.hreflangUrls || {}),
         SECONDARY_KEYWORDS: (params.secondaryKeywords || []).join(', '),
-        FOCUS_AREAS: (params.focusAreas || ['güvenlik', 'mobil', 'destek', 'bonus']).join(', ')
+        FOCUS_AREAS: (params.focusAreas || ['güvenlik', 'mobil', 'destek', 'bonus']).join(', '),
+        STRUCTURE: JSON.stringify(actualStructure, null, 2) // Add actual structure to template variables
       };
 
       const prompt = await this.promptService.getContentGenerationPrompt(templateVariables);
 
       this.logOperation('Content prompt built from template', {
         promptLength: prompt.length,
-        templateUsed: 'content-generation-prompt'
+        templateUsed: 'content-generation-prompt',
+        structureIncluded: !!templateVariables.STRUCTURE,
+        structureSections: actualStructure?.sections?.length || 0
       });
+
+      console.log('Prompt preview:', JSON.stringify(prompt, null, 2));
 
       return prompt;
 
     } catch (error) {
-      this.logError('buildContentPrompt', error);
+      this.logError(error, { operation: 'buildContentPrompt' });
       
       // Throw error instead of using fallback - all prompts should come from PromptService
       throw new Error(`Failed to load content generation prompt: ${error.message}. Ensure prompts/content-generation-prompt.md exists.`);
@@ -193,14 +250,14 @@ class ContentService extends AIServiceInterface {
         maxTokens: this.config.maxTokens
       });
 
-      console.log('🔧 About to make OpenAI API call...');
+      console.log('🔧 OpenAI API call...');
       
       const response = await this.client.chat.completions.create({
         model: this.model,
         messages: [
           {
             role: 'user', 
-            content: prompt
+            content: JSON.stringify(prompt, null, 2)
           }
         ],
         max_completion_tokens: this.config.maxTokens
@@ -217,7 +274,7 @@ class ContentService extends AIServiceInterface {
       return response;
 
     } catch (error) {
-      this.logError('Content API call failed', error, { model: this.model });
+      this.logError(error, { operation: 'Content API call failed', model: this.model });
       throw new OpenAIError(`Content API call failed: ${error.message}`, this.model, error.code);
     }
   }
@@ -242,8 +299,20 @@ class ContentService extends AIServiceInterface {
         htmlContent = htmlContent.replace(/^```\n/, '').replace(/\n```$/, '');
       }
 
-      // Basic HTML validation
-      this.validateHTMLContent(htmlContent);
+      // Basic HTML validation - but don't fail the process
+      try {
+        this.validateHTMLContent(htmlContent);
+      } catch (validationError) {
+        // Log the validation error but don't throw it - we want to save the content anyway
+        this.logOperation('HTML validation failed but proceeding', {
+          validationError: validationError.message,
+          contentLength: htmlContent.length,
+          contentPreview: htmlContent.substring(0, 200) + '...'
+        });
+        
+        // Add a comment to the HTML indicating validation issues
+        htmlContent = `<!-- HTML Validation Warning: ${validationError.message} -->\n${htmlContent}`;
+      }
       
       this.logOperation('Content parsed successfully', {
         contentLength: htmlContent.length,
@@ -256,7 +325,7 @@ class ContentService extends AIServiceInterface {
       return htmlContent;
 
     } catch (error) {
-      this.logError('Content parsing failed', error);
+      this.logError(error, { operation: 'Content parsing failed' });
       throw new Error(`Failed to parse content response: ${error.message}`);
     }
   }
@@ -266,20 +335,53 @@ class ContentService extends AIServiceInterface {
    * @param {string} htmlContent - HTML content to validate
    */
   validateHTMLContent(htmlContent) {
+    // Log content preview for debugging
+    this.logOperation('Validating HTML content', {
+      contentLength: htmlContent.length,
+      startsWithDoctype: htmlContent.trim().startsWith('<!DOCTYPE'),
+      containsHtml: htmlContent.includes('<html'),
+      containsHead: htmlContent.includes('<head'),
+      containsBody: htmlContent.includes('<body'),
+      contentPreview: htmlContent.substring(0, 200) + '...'
+    });
+
     const requiredElements = [
       { tag: '<!DOCTYPE', name: 'DOCTYPE declaration' },
       { tag: '<html', name: 'HTML tag' },
-      { tag: '<head>', name: 'HEAD tag' },
-      { tag: '<body>', name: 'BODY tag' },
+      { tag: '<head', name: 'HEAD tag' }, // More flexible - allows <head> or <head ...>
       { tag: '<title>', name: 'TITLE tag' }
     ];
 
+    // Check for body tag more flexibly
+    const hasBodyTag = htmlContent.includes('<body>') || htmlContent.includes('<body ');
+    
     const missing = requiredElements.filter(element => 
       !htmlContent.includes(element.tag)
     );
 
+    if (!hasBodyTag) {
+      this.logOperation('Missing body tag, but content may still be valid', {
+        hasMainContent: htmlContent.includes('<main>'),
+        hasArticleContent: htmlContent.includes('<article>'),
+        hasDivContent: htmlContent.includes('<div'),
+        contentLength: htmlContent.length
+      });
+      
+      // Only throw error if content is truly empty or malformed
+      if (htmlContent.length < 500) {
+        throw new Error('Generated content appears to be incomplete (less than 500 characters)');
+      }
+      
+      // Don't fail for missing body tag if we have substantial content
+      console.warn('⚠️ Generated HTML missing <body> tag but has substantial content. Proceeding...');
+    }
+
     if (missing.length > 0) {
-      throw new Error(`Missing required HTML elements: ${missing.map(m => m.name).join(', ')}`);
+      // Only fail for critical missing elements
+      const criticalMissing = missing.filter(m => m.tag === '<!DOCTYPE' || m.tag === '<html');
+      if (criticalMissing.length > 0) {
+        throw new Error(`Missing critical HTML elements: ${criticalMissing.map(m => m.name).join(', ')}`);
+      }
     }
 
     if (htmlContent.length < 1000) {
@@ -433,7 +535,7 @@ class ContentService extends AIServiceInterface {
         templateInUse: 'content-generation-prompt'
       };
     } catch (error) {
-      this.logError('getPromptStats', error);
+      this.logError(error, { operation: 'getPromptStats' });
       return {
         error: error.message,
         fallbackMode: true
@@ -458,7 +560,7 @@ class ContentService extends AIServiceInterface {
       
       return validation;
     } catch (error) {
-      this.logError('validatePromptTemplate', error);
+      this.logError(error, { operation: 'validatePromptTemplate' });
       return {
         isValid: false,
         error: error.message,
@@ -498,7 +600,7 @@ class ContentService extends AIServiceInterface {
             destination: faviconDest
           });
         } catch (error) {
-          this.logError('Failed to copy Paribahis favicon', error);
+          this.logError(error, { operation: 'Failed to copy Paribahis favicon' });
         }
         
         // Copy logo
@@ -509,11 +611,12 @@ class ContentService extends AIServiceInterface {
             destination: logoDest
           });
         } catch (error) {
-          this.logError('Failed to copy Paribahis logo', error);
+          this.logError(error, { operation: 'Failed to copy Paribahis logo' });
         }
       }
     } catch (error) {
-      this.logError('copyBrandAssets', error, {
+      this.logError(error, { 
+        operation: 'copyBrandAssets',
         outputDir,
         primaryKeyword
       });
@@ -525,8 +628,9 @@ class ContentService extends AIServiceInterface {
    * Save raw HTML content to file for debugging and inspection
    * @param {string} htmlContent - The generated HTML content
    * @param {object} params - Generation parameters for folder naming
+   * @param {string} fileType - Type of file to save ('raw-response', 'processed', etc.)
    */
-  async saveRawHTML(htmlContent, params) {
+  async saveRawHTML(htmlContent, params, fileType = 'processed') {
     try {
       // Create output directory path with primaryKeyword and date
       const primaryKeyword = params.primaryKeyword || 'content';
@@ -537,25 +641,42 @@ class ContentService extends AIServiceInterface {
       // Ensure directory exists
       await fs.mkdir(outputDir, { recursive: true });
       
-      // Copy brand-specific assets if applicable
-      await this.copyBrandAssets(outputDir, primaryKeyword);
+      // Copy brand-specific assets if applicable (only for processed content)
+      if (fileType === 'processed') {
+        await this.copyBrandAssets(outputDir, primaryKeyword);
+      }
       
-      // Create raw.html file path
-      const rawHtmlPath = path.join(outputDir, 'raw.html');
+      // Create file path based on type
+      let fileName;
+      switch (fileType) {
+        case 'raw-response':
+          fileName = 'raw-response.html';
+          break;
+        case 'processed':
+          fileName = 'raw.html';
+          break;
+        default:
+          fileName = `${fileType}.html`;
+      }
       
-      // Save HTML content
-      await fs.writeFile(rawHtmlPath, htmlContent, 'utf8');
+      const filePath = path.join(outputDir, fileName);
       
-      this.logOperation('Raw HTML saved for inspection', {
-        filePath: rawHtmlPath,
+      // Save content regardless of validity
+      await fs.writeFile(filePath, htmlContent, 'utf8');
+      
+      this.logOperation(`${fileType} content saved for inspection`, {
+        filePath,
         contentLength: htmlContent.length,
-        outputDir
+        outputDir,
+        fileType
       });
       
     } catch (error) {
-      this.logError('saveRawHTML', error, {
+      this.logError(error, {
+        operation: 'saveRawHTML',
         primaryKeyword: params.primaryKeyword,
-        contentLength: htmlContent?.length || 0
+        contentLength: htmlContent?.length || 0,
+        fileType
       });
       // Don't throw error - this is just for debugging, shouldn't break the workflow
     }

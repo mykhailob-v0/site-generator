@@ -130,7 +130,6 @@ program
   .option('-fa, --focus-areas <areas>', 'Comma-separated focus areas')
   .option('-tl, --target-language <lang>', 'Target language code', 'tr')
   .action((options) => {
-    console.log('🔍 Validating input parameters...');
     
     try {
       const rawInput = {

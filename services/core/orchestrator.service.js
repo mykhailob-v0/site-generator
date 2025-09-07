@@ -290,60 +290,109 @@ class OrchestratorService extends BaseService {
     console.log('HTML content length:', htmlContent ? htmlContent.length : 'null/undefined');
     console.log('HTML content preview (first 200 chars):', htmlContent ? htmlContent.substring(0, 200) + '...' : 'none');
     
-    // Parse HTML to find image placeholders
-    const imageReferences = this.parseImageReferences(htmlContent);
+    // Parse HTML to find image references
+    const allImageReferences = this.parseImageReferences(htmlContent);
     
-    if (imageReferences.length === 0) {
+    if (allImageReferences.length === 0) {
       this.logOperation('No image references found in HTML');
       return { imagePrompts: [], parsedContent: htmlContent };
     }
 
-    this.logOperation(`Found ${imageReferences.length} image references`);
+    this.logOperation(`Found ${allImageReferences.length} total image references`);
 
-    // Generate prompts for each image
+    // Deduplicate image references based on src and altText combination
+    const uniqueRefs = new Map();
+    const referenceMap = new Map(); // Maps unique key to all references
+    
+    allImageReferences.forEach((ref, index) => {
+      const uniqueKey = `${ref.src}|${ref.altText}`;
+      
+      if (!uniqueRefs.has(uniqueKey)) {
+        uniqueRefs.set(uniqueKey, { ...ref, referenceCount: 1, indices: [index] });
+        referenceMap.set(uniqueKey, [ref]);
+      } else {
+        uniqueRefs.get(uniqueKey).referenceCount++;
+        uniqueRefs.get(uniqueKey).indices.push(index);
+        referenceMap.get(uniqueKey).push(ref);
+      }
+    });
+
+    const uniqueImageReferences = Array.from(uniqueRefs.values());
+    
+    this.logOperation(`Deduplicated to ${uniqueImageReferences.length} unique images`, {
+      totalReferences: allImageReferences.length,
+      uniqueImages: uniqueImageReferences.length,
+      duplicatesAvoided: allImageReferences.length - uniqueImageReferences.length
+    });
+
+    // Generate prompts for each unique image
     const imagePrompts = await this.services.imagePrompt.generatePrompts(
       htmlContent,
-      imageReferences,
+      uniqueImageReferences,
       params
     );
+
+    // Add reference mapping to prompts for later use
+    imagePrompts.forEach((prompt, index) => {
+      const uniqueKey = `${uniqueImageReferences[index].src}|${uniqueImageReferences[index].altText}`;
+      prompt.referenceCount = uniqueRefs.get(uniqueKey).referenceCount;
+      prompt.allReferences = referenceMap.get(uniqueKey);
+      prompt.uniqueKey = uniqueKey;
+    });
 
     return { imagePrompts, parsedContent: htmlContent };
   }
 
   /**
-   * Generate images from prompts using parallel processing
-   * @param {Array} imagePrompts - Array of image prompts
+   * Generate images from prompts using parallel processing with deduplication
+   * @param {Array} imagePrompts - Array of unique image prompts with reference mapping
    * @param {object} params - Generation parameters
-   * @returns {Promise<Array>} - Generated images
+   * @returns {Promise<Array>} - Generated images (expanded to match all references)
    */
   async generateImages(imagePrompts, params) {
     if (imagePrompts.length === 0) {
       return [];
     }
 
-    this.logOperation(`Generating ${imagePrompts.length} images`);
+    const totalReferences = imagePrompts.reduce((sum, prompt) => sum + (prompt.referenceCount || 1), 0);
+    
+    this.logOperation(`Generating ${imagePrompts.length} unique images for ${totalReferences} total references`, {
+      uniqueImages: imagePrompts.length,
+      totalReferences: totalReferences,
+      efficiencyGain: totalReferences - imagePrompts.length
+    });
 
     try {
-      // Use the ImageGenerationService's parallel processing capability
-      const images = await this.services.imageGeneration.generateImages(imagePrompts, params.outputDir);
+      // Use the ImageGenerationService's parallel processing capability for unique images
+      const uniqueImages = await this.services.imageGeneration.generateImages(imagePrompts, params.outputDir);
 
       this.logOperation(`Parallel image generation completed`, { 
         requested: imagePrompts.length, 
-        generated: images.length,
-        successRate: Math.round((images.length / imagePrompts.length) * 100)
+        generated: uniqueImages.length,
+        successRate: Math.round((uniqueImages.length / imagePrompts.length) * 100)
       });
 
-      return images;
+      // Expand unique images to cover all references
+      const allImages = this.expandImagesToReferences(uniqueImages, imagePrompts);
+
+      this.logOperation(`Images expanded to cover all references`, {
+        uniqueGenerated: uniqueImages.length,
+        totalImageObjects: allImages.length,
+        totalReferences: totalReferences
+      });
+
+      return allImages;
 
     } catch (error) {
       this.logError('Parallel image generation failed', error, { 
-        promptCount: imagePrompts.length 
+        promptCount: imagePrompts.length,
+        totalReferences: totalReferences
       });
       
       // Fallback to sequential processing if parallel fails
       this.logOperation('Falling back to sequential image generation');
       
-      const images = [];
+      const uniqueImages = [];
       
       for (const prompt of imagePrompts) {
         try {
@@ -364,11 +413,12 @@ class OrchestratorService extends BaseService {
             imageData = await this.services.imageGeneration.generateSingleImage(prompt, params.outputDir);
           }
 
-          images.push(imageData);
+          uniqueImages.push(imageData);
           
           this.logOperation('Image generated successfully', { 
             altText: prompt.altText,
-            filename: imageData.filename 
+            filename: imageData.filename,
+            willBeUsed: prompt.referenceCount || 1
           });
 
         } catch (error) {
@@ -379,13 +429,45 @@ class OrchestratorService extends BaseService {
 
       this.logOperation(`Sequential fallback completed`, { 
         requested: imagePrompts.length, 
-        generated: images.length 
+        generated: uniqueImages.length 
       });
 
-      return images;
-    }
+      // Expand unique images to cover all references
+      const allImages = this.expandImagesToReferences(uniqueImages, imagePrompts);
 
-    return images;
+      return allImages;
+    }
+  }
+
+  /**
+   * Expand unique generated images to cover all HTML references
+   * @param {Array} uniqueImages - Array of generated unique images
+   * @param {Array} imagePrompts - Array of prompts with reference mapping
+   * @returns {Array} - Expanded array of image objects for all references
+   */
+  expandImagesToReferences(uniqueImages, imagePrompts) {
+    const allImages = [];
+    
+    uniqueImages.forEach((image, index) => {
+      const prompt = imagePrompts[index];
+      const referenceCount = prompt.referenceCount || 1;
+      
+      // Create image object for each reference
+      for (let i = 0; i < referenceCount; i++) {
+        const imageForReference = {
+          ...image,
+          // Add reference-specific metadata if needed
+          referenceIndex: i,
+          isOriginal: i === 0,
+          uniqueKey: prompt.uniqueKey,
+          totalReferences: referenceCount
+        };
+        
+        allImages.push(imageForReference);
+      }
+    });
+
+    return allImages;
   }
 
   /**

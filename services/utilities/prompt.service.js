@@ -195,7 +195,9 @@ class PromptService extends BaseService {
   async getContentGenerationPrompt(params) {
     this.logOperation('getContentGenerationPrompt', { 
       hasStructure: !!params.structure,
-      primaryKeyword: params.primaryKeyword 
+      hasSTRUCTURE: !!params.STRUCTURE,
+      primaryKeyword: params.primaryKeyword,
+      structureKeys: params.STRUCTURE ? Object.keys(params.STRUCTURE) : (params.structure ? Object.keys(params.structure) : [])
     });
 
     // Map variables to the exact format expected by the template (both UPPERCASE and kebab-case)
@@ -206,8 +208,9 @@ class PromptService extends BaseService {
       CANONICAL_URL: params.CANONICAL_URL || params.canonicalUrl || 'https://example.com',
       HREFLANG_URLS: params.HREFLANG_URLS || (typeof params.hreflangUrls === 'object' ? JSON.stringify(params.hreflangUrls) : '{}'),
       FOCUS_AREAS: params.FOCUS_AREAS || (Array.isArray(params.focusAreas) ? params.focusAreas.join(', ') : 'güvenlik, mobil, destek'),
+      STRUCTURE: params.STRUCTURE || params.structure || {}, // Add STRUCTURE variable mapping for template
       brandName: params.brandName || 'Bahis Sitesi',
-      structure: params.structure || {},
+      structure: params.structure || {}, // Keep for backward compatibility
       targetLanguage: params.targetLanguage || 'tr'
     };
 

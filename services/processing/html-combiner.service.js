@@ -400,7 +400,7 @@ class HTMLCombinerService extends BaseService {
       'icon': { width: 64, height: 64, context: 'feature icon' },
       'campaign': { width: 400, height: 300, context: 'campaign image' },
       'hero': { width: 1200, height: 675, context: 'hero background' },
-      'section': { width: 600, height: 400, context: 'section image' }
+      'section': { width: 400, height: 400, context: 'section image' }
     };
     
     // Find best match based on filename
