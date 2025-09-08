@@ -1,13 +1,13 @@
 # HTML Generator for Gambling Sites
 
-AI-powered HTML generator that creates high-quality, SEO-optimized gambling/betting websites using OpenAI's advanced models. Features a sophisticated 6-service modular architecture with dynamic structure generation, designed specifically for Turkish gambling sites with E-E-A-T compliance for YMYL content.
+AI-powered HTML generator that creates high-quality, SEO-optimized gambling/betting websites using OpenAI's GPT-5 model. Features a sophisticated service-based modular architecture with dynamic structure generation and optional image generation, designed specifically for Turkish gambling sites with E-E-A-T compliance for YMYL content.
 
 ## 🚀 Quick Installation & Setup
 
 ### **Prerequisites**
 - Node.js 18.0.0 or higher
-- OpenAI API key with access to GPT-5, GPT-5-Nano, and GPT-Image-1 models
-- Verified OpenAI organization (required for GPT-Image-1 model)
+- OpenAI API key with access to GPT-5 model (gpt-5-2025-08-07)
+- DALL-E 3 model access for image generation (when using --need-images flag)
 
 ### **Installation**
 
@@ -38,7 +38,7 @@ AI-powered HTML generator that creates high-quality, SEO-optimized gambling/bett
 
 5. **Generate your first site**:
    ```bash
-   node cli.js generate \
+   node cli-api.js generate \
      --primary-keyword "YourBrand" \
      --canonical-url "https://yourdomain.com" \
      --brand-name "Your Brand Name"
@@ -62,70 +62,80 @@ node cli-api.js generate \
 
 ## 🏗️ Architecture & Workflow
 
-The HTML generator uses an **Enhanced AI-Powered 6-Step Workflow** with dynamic structure generation that ensures each site is unique, optimized, and contextually relevant:
+The HTML generator uses an **Enhanced AI-Powered Service Architecture** with dynamic structure generation that ensures each site is unique, optimized, and contextually relevant:
 
-### **Enhanced Generation Workflow:**
+### **Generation Workflow:**
 
 ```
-Step 0: Dynamic Structure Generation (GPT-5-Nano + Structured Output)
+Step 1: Input Processing & Validation
     ↓
-Step 1: HTML Content Generation (GPT-5)
+Step 2: Dynamic Structure Generation (GPT-5 + JSON Schema)
     ↓
-Step 2: HTML Parsing & Image Reference Analysis
+Step 3: HTML Content Generation (GPT-5 with dynamic prompts)
     ↓
-Step 3: AI-Contextual Image Prompt Generation (GPT-5)
+Step 4: Image Reference Analysis (if --need-images flag used)
     ↓
-Step 4: Intelligent Image Generation (GPT-Image-1)
+Step 5: Image Prompt Generation (GPT-5)
     ↓
-Step 5: Self-contained HTML Assembly & Additional Files
+Step 6: Image Generation (DALL-E 3)
+    ↓
+Step 7: HTML Assembly & File Generation
 ```
 
 ### **Detailed Process:**
 
-0. **📐 Dynamic HTML Structure Planning**
-   - Uses **GPT-5-Nano** with **structured output** for efficient planning
+1. **� Input Processing & Validation**
+   - Validates all input parameters and API keys
+   - Processes and normalizes user requirements
+   - Sets up output directories and logging levels
+   - Handles the `--need-images` flag for workflow control
+
+2. **�📐 Dynamic HTML Structure Planning**
+   - Uses **GPT-5** model (`gpt-5-2025-08-07`) for intelligent structure planning
    - Generates dynamic HTML structure based on user requirements
    - Creates contextual section plans with **JSON Schema validation**
-   - Optimized for speed and cost-effectiveness
+   - Optimized layouts for gambling industry best practices
 
-1. **🤖 AI-Enhanced HTML Content Generation**
-   - Uses **GPT-5** model (`gpt-5-2025-08-07`) with dynamic structure input
-   - Generates contextually relevant content based on structure plan
+3. **🤖 AI-Enhanced HTML Content Generation**
+   - Uses **GPT-5** model with dynamic structure input
+   - Selects appropriate prompt template based on `--need-images` flag
+   - Generates contextually relevant content with full SEO optimization
    - Includes all SEO elements, hreflang tags, and E-E-A-T compliance
-   - Adaptive content length and focus based on requirements
+   - Dynamic CSS generation with unique color schemes and layouts
 
-2. **🔍 Intelligent HTML Analysis** 
+4. **🔍 Image Reference Analysis (Optional)**
+   - **Only runs when `--need-images` flag is used**
    - Advanced parsing of generated HTML for all image references
-   - Identifies `<img>` tags, CSS backgrounds, favicons, and meta icons
-   - Creates comprehensive image requirement list
+   - Identifies `<img>` tags and creates comprehensive image requirement list
    - Analyzes image context and purpose within HTML structure
 
-3. **🧠 AI-Contextual Image Prompt Generation**
+5. **🧠 AI-Contextual Image Prompt Generation (Optional)**
    - Uses **GPT-5** to analyze HTML content and generate contextual prompts
    - Creates specific, relevant prompts for each image based on surrounding content
    - Generates professional gambling industry-appropriate descriptions
    - Ensures brand consistency and visual coherence
 
-4. **🎨 Smart Image Generation with Validation**
-   - Uses **GPT-Image-1** model with AI-generated contextual prompts
-   - **Automatic size validation** and correction for OpenAI API compatibility
-   - Intelligent fallback to **enhanced WebP placeholders** when needed
+6. **🎨 Smart Image Generation (Optional)**
+   - Uses **DALL-E 3** model with AI-generated contextual prompts
+   - Generates high-quality images with professional gambling industry standards
    - Optimized format conversion and quality management
+   - Maximum 6 images per site for performance optimization
 
-5. **📦 Self-contained Assembly & Deployment Package**
-   - Embeds all images as **base64 data URLs** for zero-dependency deployment
+7. **📦 HTML Assembly & File Generation**
+   - Creates self-contained HTML with embedded CSS and JavaScript
+   - Embeds images as **base64 data URLs** when images are generated
    - Creates comprehensive deployment package with SEO files
-   - Generates `robots.txt`, `sitemap.xml`, `manifest.json`
-   - Optimizes final file size while maintaining quality
+   - Generates `robots.txt`, `sitemap.xml` with proper hreflang structure
+   - Copies brand-specific assets (Paribahis favicon and logo when applicable)
 
 ## 🚀 Key Features
 
 ### **Advanced AI Architecture**
-- **6-Service Modular Design** with specialized AI workflows
-- **GPT-5-Nano** for efficient structure planning with structured output
-- **GPT-5** (`gpt-5-2025-08-07`) for premium content generation
-- **GPT-Image-1** with AI-contextual prompt generation and size validation
-- **Dynamic workflow** that adapts to each site's unique requirements
+- **Service-based Modular Design** with specialized AI workflows
+- **GPT-5** (`gpt-5-2025-08-07`) for both structure planning and content generation
+- **DALL-E 3** for high-quality image generation (when `--need-images` flag is used)
+- **Dynamic workflow** that adapts based on user requirements and flags
+- **Conditional image generation** - skip image steps when not needed
 
 ### **Intelligent Structure Generation**
 - **Dynamic HTML planning** based on user requirements and industry best practices
@@ -133,16 +143,19 @@ Step 5: Self-contained HTML Assembly & Additional Files
 - **Contextual section planning** optimized for gambling industry needs
 - **Adaptive content architecture** that scales with complexity
 
-### **AI-Enhanced Image Workflow**
+### **AI-Enhanced Image Workflow (Optional)**
+- **Conditional activation** via `--need-images` flag
 - **Context-aware prompt generation** using GPT-5 analysis of HTML content
-- **Automatic size validation** and correction for OpenAI API compatibility
-- **Smart placeholder fallbacks** with enhanced WebP quality
+- **DALL-E 3 integration** for high-quality image generation
+- **Performance optimization** - maximum 6 images per site
+- **CSS-based icons** for UI elements instead of generated images
 - **Professional gambling industry** visual standards and branding
 
-### **Self-contained Deployment**
-- **Single HTML file** with all assets embedded as base64 (typically 150-200KB)
+### **Flexible Deployment Options**
+- **Image-free mode** - ultra-fast generation without images (use without `--need-images` flag)
+- **Image-enhanced mode** - complete sites with embedded base64 images (use `--need-images` flag)
 - **Zero external dependencies** - deploy anywhere instantly
-- **WebP optimization** for maximum performance and quality
+- **Performance optimized** - CSS icons reduce file size and loading time
 - **Offline capable** - works without internet after generation
 
 ### **Enterprise-Grade SEO**
@@ -159,57 +172,72 @@ Step 5: Self-contained HTML Assembly & Additional Files
 
 ## 🎯 Usage Examples
 
-### **Basic Generation:**
+### **Basic Generation (Image-Free Mode):**
 ```bash
-node cli.js generate 
+node cli-api.js generate 
   --primary-keyword "Paribahis" 
   --canonical-url "https://example.com" 
-  --api-key sk-...
+  --brand-name "Paribahis"
 ```
 
-### **With Hreflang URLs:**
+### **With Images Generation:**
 ```bash
-node cli.js generate 
+node cli-api.js generate 
   --primary-keyword "Paribahis" 
   --canonical-url "https://example.com" 
-  --hreflang-urls '{"tr":"https://tr.example.com","en":"https://en.example.com","ru":"https://ru.example.com"}' 
+  --need-images
+  --brand-name "Paribahis"
+```
+
+### **Complete Example with All Options:**
+```bash
+node cli-api.js generate 
+  --primary-keyword "Paribahis Giris" 
+  --canonical-url "https://example.com" 
+  --hreflang-urls '{"tr":"https://tr.example.com","en":"https://en.example.com"}' 
   --secondary-keywords "bahis,casino,spor" 
   --focus-areas "güvenlik,bonus,mobil" 
-  --brand-name "Paribahis Resmi" 
-  --api-key sk-...
+  --brand-name "Paribahis" 
+  --need-images
+  --output-dir "./output"
+  --log-level "detailed"
 ```
 
 ### **Using Environment Variable:**
 ```bash
 export OPENAI_API_KEY=sk-...
-node cli.js generate --primary-keyword "Paribahis" --canonical-url "https://example.com"
+node cli-api.js generate --primary-keyword "Paribahis" --canonical-url "https://example.com"
 ```
 
 ## ⚡ Enhanced Workflow Advantages
 
 ### **🧠 AI-Powered Intelligence**
 - **Dynamic structure planning** creates unique layouts for each site
-- **Contextual image generation** produces relevant, professional visuals
+- **Contextual image generation** produces relevant, professional visuals (when --need-images is used)
 - **Structured output validation** ensures consistent, high-quality results
 - **Adaptive content scaling** based on requirements and complexity
+- **SEO optimization** with full keyword cluster targeting
 
 ### **🔄 Smart & Efficient**
 - **Modular service architecture** allows independent testing and optimization
-- **No wasted API calls** - only generates images that are actually needed
+- **Conditional workflows** - skip image generation when not needed with flag control
+- **No wasted API calls** - only generates images when --need-images flag is used
 - **Intelligent fallbacks** ensure generation completes even if some services fail
-- **Cost-optimized model selection** (GPT-5-Nano for structure, GPT-5 for content)
+- **Performance optimized** - maximum 6 images per site, CSS icons for UI elements
 
 ### **📦 Production Ready**
+- **Flexible deployment options** - image-free or image-enhanced modes
 - **Self-contained deployment** requires no server configuration or file management
 - **Instant deployment** to any hosting service, CDN, or static hosting platform
-- **Zero broken links** - all assets embedded and guaranteed to work
+- **Zero broken links** - all assets embedded when using --need-images
 - **Professional output** ready for immediate production use
 
 ### **🚀 Performance Optimized**
-- **WebP format** provides 25-35% better compression than JPEG/PNG
-- **Single HTTP request** loads entire website with embedded assets
-- **Base64 embedding** eliminates network latency for images
-- **Optimized file sizes** typically 150-200KB for complete sites
+- **Ultra-fast image-free mode** - generate sites in seconds without images
+- **Optimized image mode** - maximum 6 images per site for fast loading
+- **CSS-based UI elements** - use Unicode symbols and CSS shapes instead of images
+- **Base64 embedding** eliminates network latency for images (when generated)
+- **Dynamic CSS generation** - unique visual designs for each site
 
 ### **🔧 Developer Friendly**
 - **Atomic operations** - each step can be tested and debugged independently  
@@ -222,25 +250,41 @@ node cli.js generate --primary-keyword "Paribahis" --canonical-url "https://exam
 ### Generate Command
 | Option | Description | Example |
 |--------|-------------|---------|
-| `-k, --primary-keyword <keyword>` | Primary SEO keyword | `--primary-keyword "Paribahis"` |
-| `-u, --canonical-url <url>` | Canonical URL | `--canonical-url "https://example.com"` |
-| `-h, --hreflang-urls <json>` | Hreflang URLs (JSON) | `--hreflang-urls '{"tr":"https://tr.example.com"}'` |
-| `-s, --secondary-keywords <keywords>` | Secondary keywords (comma-separated) | `--secondary-keywords "bahis,casino"` |
-| `-f, --focus-areas <areas>` | Focus areas (comma-separated) | `--focus-areas "güvenlik,bonus"` |
-| `-b, --brand-name <name>` | Brand/site name | `--brand-name "Paribahis Resmi"` |
-| `-o, --output-dir <dir>` | Output directory | `--output-dir "./custom-output"` |
-| `--api-key <key>` | OpenAI API key | `--api-key "sk-..."` |
-| `-s, --secondary <keywords>` | Secondary keywords (comma-separated) | `--secondary "bahis,casino"` |
-| `-f, --focus <areas>` | Focus areas (comma-separated) | `--focus "Güvenlik,Mobil"` |
-| `-b, --brand <name>` | Brand name | `--brand "Paribahis"` |
-| `--api-key <key>` | OpenAI API key | `--api-key "sk-..."` |
-| `--interactive` | Interactive mode | `--interactive` |
+| `--primary-keyword <keyword>` | Primary SEO keyword | `--primary-keyword "Paribahis Giris"` |
+| `--canonical-url <url>` | Canonical URL | `--canonical-url "https://example.com"` |
+| `--hreflang-urls <json>` | Hreflang URLs (JSON) | `--hreflang-urls '{"tr":"https://tr.example.com"}'` |
+| `--secondary-keywords <keywords>` | Secondary keywords (comma-separated) | `--secondary-keywords "bahis,casino"` |
+| `--focus-areas <areas>` | Focus areas (comma-separated) | `--focus-areas "güvenlik,bonus,mobil"` |
+| `--brand-name <name>` | Brand/site name | `--brand-name "Paribahis"` |
+| `--need-images` | Generate with image references | `--need-images` |
+| `--output-dir <dir>` | Output directory | `--output-dir "./custom-output"` |
+| `--log-level <level>` | Logging verbosity | `--log-level "detailed"` |
 
-### Other Commands
-- `status` - Check system status and connectivity
-- `validate` - Validate configuration
-- `--help` - Show help information
-- `--version` - Show version information
+### Command Examples
+
+**Generate without images (fastest):**
+```bash
+node cli-api.js generate --primary-keyword "Paribahis" --canonical-url "https://example.com" --brand-name "Paribahis"
+```
+
+**Generate with images:**
+```bash
+node cli-api.js generate --primary-keyword "Paribahis" --canonical-url "https://example.com" --brand-name "Paribahis" --need-images
+```
+
+**Full configuration with logging:**
+```bash
+node cli-api.js generate \
+  --primary-keyword "Paribahis Giris online" \
+  --canonical-url "https://example.com" \
+  --hreflang-urls '{"tr":"https://tr.example.com","en":"https://en.example.com"}' \
+  --secondary-keywords "Paribahis,casino,bahis" \
+  --focus-areas "güvenlik,bonus,mobil" \
+  --brand-name "Paribahis" \
+  --need-images \
+  --output-dir "./output" \
+  --log-level "detailed"
+```
 
 ## Output Structure
 
@@ -312,22 +356,32 @@ Images are **contextually generated** based on HTML analysis:
 ## API Usage and Costs
 
 ### Model Usage and Token Consumption
-- **Structure Generation (GPT-5-Nano)**: ~2,000-4,000 tokens per site
-- **HTML Content Generation (GPT-5)**: ~10,000-18,000 tokens per site  
+
+**Image-Free Mode (without --need-images):**
+- **Structure Generation (GPT-5)**: ~5,000-8,000 tokens per site
+- **HTML Content Generation (GPT-5)**: ~15,000-25,000 tokens per site  
+- **Total tokens**: ~20,000-33,000 per site
+- **Generation time**: 30 seconds - 2 minutes
+- **No image generation costs**
+
+**Image-Enhanced Mode (with --need-images):**
+- **Structure Generation (GPT-5)**: ~5,000-8,000 tokens per site
+- **HTML Content Generation (GPT-5)**: ~15,000-25,000 tokens per site
 - **Image Prompt Analysis (GPT-5)**: ~8,000-12,000 tokens per site
-- **Image Generation (GPT-Image-1)**: 20-40 images per site (varies by structure)
+- **Image Generation (DALL-E 3)**: Maximum 6 images per site
+- **Total tokens**: ~28,000-45,000 per site
+- **Generation time**: 3-8 minutes depending on image complexity
 
 ### Performance Optimizations
-- **Cost-efficient model selection**: GPT-5-Nano for structure planning
-- **Structured output**: Reduces token usage and improves consistency
+- **Conditional workflow**: Skip image generation entirely when not needed
+- **Maximum 6 images**: Optimized for performance and cost control
+- **CSS-based UI elements**: Use Unicode symbols instead of generated images
 - **Intelligent image analysis**: Only generates images actually referenced in HTML
 - **Rate limiting**: Built-in delays and retry logic for API reliability
 
 ### Typical Generation Stats
-- **Total tokens**: ~20,000-34,000 per complete site
-- **Images generated**: 20-40 contextual images
-- **Generation time**: 3-8 minutes depending on complexity
-- **Final file size**: 150-200KB self-contained HTML
+- **Image-free sites**: ~25,000 tokens, 1-2 minutes, ~50-100KB HTML
+- **Image-enhanced sites**: ~35,000 tokens, 6 images, 4-6 minutes, ~200-400KB HTML
 
 ## Configuration
 
@@ -348,24 +402,26 @@ Configuration is managed in `config/openai.config.js`:
 {
   openai: {
     models: {
-      structureGenerator: 'gpt-5-nano',     // Efficient structure planning
-      contentGenerator: 'gpt-5-2025-08-07', // Premium content generation  
-      imageAnalyzer: 'gpt-5-2025-08-07',    // Contextual image prompts
-      imageGenerator: 'gpt-image-1'         // AI image generation
+      structureGenerator: 'gpt-5-2025-08-07', // Structure planning
+      contentGenerator: 'gpt-5-2025-08-07',   // Content generation  
+      imageAnalyzer: 'gpt-5-2025-08-07',      // Contextual image prompts
+      imageGenerator: 'dall-e-3'              // AI image generation
     },
     limits: {
-      maxTokens: 16000,
-      temperature: 0.7
+      maxTokens: 128000
+      // temperature: removed - gpt-5-2025-08-07 only supports default (1)
     }
   },
   images: {
     quality: 'hd',
     format: 'webp',
-    sizeValidation: true    // Automatic size correction
+    maxImages: 6,           // Performance optimization
+    cssIconsEnabled: true   // Use CSS icons for UI elements
   },
   generation: {
-    structuredOutput: true,  // Use JSON Schema validation
-    enhancedWorkflow: true   // Enable 6-step AI workflow
+    conditionalImages: true,  // Use --need-images flag control
+    dynamicPrompts: true,     // Switch between image/no-image prompts
+    seoOptimized: true        // Full keyword cluster optimization
   }
 }
 ```
@@ -428,25 +484,40 @@ DEBUG=1 node cli.js generate --interactive
 ### Project Structure
 ```
 index-html-generator/
-├── cli.js                           # Command line interface
-├── cli-new.js                       # Enhanced CLI with new workflow
+├── cli-api.js                       # Main command line interface
+├── api-server.js                    # Express API server
 ├── package.json                     # Dependencies and scripts
 ├── config/
 │   └── openai.config.js            # AI model configuration
-├── services/                        # Modular AI service architecture
-│   ├── structure-generator.service.js  # GPT-5-Nano structure planning
-│   ├── content-generator.service.js    # GPT-5 HTML generation
-│   ├── image-analyzer.service.js       # GPT-5 image prompt analysis
-│   ├── image-generator.service.js      # GPT-Image-1 generation
-│   ├── html-combiner.service.js        # Self-contained HTML assembly
-│   └── file-generator.service.js       # SEO files and deployment package
+├── services/                        # Modular service architecture
+│   ├── ai/
+│   │   └── content.service.js       # GPT-5 content generation
+│   ├── api/
+│   │   └── generator-api.service.js # API orchestration
+│   ├── core/
+│   │   ├── orchestrator.service.js  # Main workflow orchestration
+│   │   └── validation.service.js    # Input validation
+│   ├── input/
+│   │   └── input-processor.service.js # Input processing and normalization
+│   ├── processing/
+│   │   ├── generator.service.js     # Core generation logic
+│   │   ├── html-combiner.service.js # HTML assembly
+│   │   ├── html-generator.service.js # HTML file creation
+│   │   ├── image-generator.service.js # DALL-E 3 image generation
+│   │   └── structure-generator.service.js # GPT-5 structure planning
+│   └── utilities/
+│       └── prompt.service.js        # Prompt template management
 ├── schemas/
-│   └── structure.schema.js          # JSON Schema for structured output
+│   └── structure.schema.js          # JSON Schema for validation
 ├── prompts/
-│   ├── structure-generation-prompt.md  # Dynamic structure prompts
-│   ├── content-generation-prompt.md    # HTML content prompts
-│   ├── image-analysis-prompt.md        # Contextual image analysis
-│   └── image-generation-prompt.md      # AI image generation prompts
+│   ├── content-generation-prompt.md     # HTML content prompts (with images)
+│   ├── no-images-content-generation-prompt.md # HTML prompts (image-free)
+│   ├── structure-generation-prompt.md   # Dynamic structure prompts
+│   └── image-generation-prompt.md       # AI image generation prompts
+├── assets/
+│   └── paribahis/                   # Brand-specific assets
+│       ├── paribahis-favicon-32.png
+│       └── paribahis-logo.svg
 └── output/                          # Generated sites directory
 ```
 
@@ -465,23 +536,36 @@ Each service is independent and can be:
 
 ## Examples
 
-### Turkish Betting Site
+### Turkish Betting Site (Image-Free)
 ```bash
-node cli.js generate \
-  --keyword "Paribahis" \
-  --url "https://paribahis.com" \
-  --secondary "paribahis giriş,paribahis kayıt,bahis" \
-  --focus "Güvenlik,Mobil Uyum,Canlı Destek" \
-  --brand "Paribahis"
+node cli-api.js generate \
+  --primary-keyword "Paribahis Giris" \
+  --canonical-url "https://paribahis.com" \
+  --secondary-keywords "paribahis giriş,paribahis kayıt,bahis" \
+  --focus-areas "güvenlik,mobil,destek" \
+  --brand-name "Paribahis"
+```
+
+### Turkish Betting Site (With Images)
+```bash
+node cli-api.js generate \
+  --primary-keyword "Paribahis Giris" \
+  --canonical-url "https://paribahis.com" \
+  --secondary-keywords "paribahis giriş,paribahis kayıt,bahis" \
+  --focus-areas "güvenlik,mobil,destek" \
+  --brand-name "Paribahis" \
+  --need-images
 ```
 
 ### Casino Site
 ```bash
-node cli.js generate \
-  --keyword "Casino Metropol" \
-  --url "https://casinometropol.com" \
-  --secondary "casino,slot,poker" \
-  --focus "Casino Oyunları,Bonuslar,VIP Program"
+node cli-api.js generate \
+  --primary-keyword "Casino Metropol" \
+  --canonical-url "https://casinometropol.com" \
+  --secondary-keywords "casino,slot,poker" \
+  --focus-areas "casino,bonus,vip" \
+  --brand-name "Casino Metropol" \
+  --need-images
 ```
 
 ## License

@@ -37,6 +37,7 @@ program
   .option('-bt, --business-type <type>', 'Type of business', 'online betting platform')
   .option('-od, --output-dir <dir>', 'Output directory', './output')
   .option('-ll, --log-level <level>', 'Log verbosity level (minimal, standard, detailed, debug)', 'minimal')
+  .option('--need-images', 'Generate HTML with image references (if not set, creates image-free HTML)')
   .action(async (options) => {
     console.log('🚀 Starting HTML generation with abstracted input system...');
     
@@ -62,7 +63,8 @@ program
         targetLanguage: options.targetLanguage,
         businessType: options.businessType,
         outputDir: options.outputDir,
-        logLevel: options.logLevel
+        logLevel: options.logLevel,
+        needImages: options.needImages || false
       };
 
       console.log('📋 Raw Input:', rawInput);

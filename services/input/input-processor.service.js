@@ -20,6 +20,7 @@
  * @property {Object} [designPreferences] - Design and layout preferences
  * @property {Object} [contentSettings] - Content generation settings
  * @property {string} [logLevel] - Log verbosity level ('minimal', 'standard', 'detailed', 'debug')
+ * @property {boolean} [needImages] - Whether to generate HTML with image references (default: true)
  */
 
 /**
@@ -50,7 +51,8 @@ class InputProcessor {
         includeTestimonials: true,
         includeFAQ: true
       },
-      logLevel: 'minimal' // Default to minimal logging for better UX
+      logLevel: 'minimal', // Default to minimal logging for better UX
+      needImages: true // Default to including images
     };
 
     this.requiredFields = ['primaryKeyword', 'brandName', 'canonicalUrl', 'hreflangUrls'];
@@ -91,6 +93,10 @@ class InputProcessor {
       logLevel: {
         allowedValues: ['minimal', 'standard', 'detailed', 'debug'],
         default: 'minimal'
+      },
+      needImages: {
+        type: 'boolean',
+        default: true
       }
     };
   }
@@ -157,6 +163,11 @@ class InputProcessor {
         }
       }
 
+      // Boolean validation
+      if (rules.type === 'boolean' && typeof value !== 'boolean') {
+        throw new ValidationError(`${field} must be a boolean value`);
+      }
+
       // Array validation
       if (Array.isArray(value)) {
         if (rules.maxItems && value.length > rules.maxItems) {
@@ -217,6 +228,13 @@ class InputProcessor {
       } catch (error) {
         throw new ValidationError('Invalid hreflangUrls JSON format');
       }
+    }
+
+    // Normalize needImages
+    if (typeof normalized.needImages === 'string') {
+      normalized.needImages = normalized.needImages.toLowerCase() === 'true';
+    } else if (normalized.needImages === undefined) {
+      normalized.needImages = this.defaults.needImages;
     }
 
     // Generate canonical URL if not provided
@@ -306,6 +324,10 @@ class InputProcessor {
       args.push('--hreflang-urls', JSON.stringify(input.hreflangUrls));
     }
     
+    if (input.needImages) {
+      args.push('--need-images');
+    }
+    
     return args;
   }
 
@@ -369,6 +391,11 @@ class InputProcessor {
           enum: this.validationRules.targetLanguage.allowedValues,
           description: 'Target language code',
           default: 'tr'
+        },
+        needImages: {
+          type: 'boolean',
+          description: 'Whether to generate HTML with image references',
+          default: true
         }
       }
     };

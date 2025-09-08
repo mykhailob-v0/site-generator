@@ -114,6 +114,7 @@ class OrchestratorService extends BaseService {
       console.log('contentResult keys:', contentResult ? Object.keys(contentResult) : 'null');
       console.log('contentResult.content type:', typeof contentResult?.content);
       console.log('contentResult.content length:', contentResult?.content?.length);
+      console.log('needImages parameter:', validatedParams.needImages);
       
       // Ensure htmlContent is a string
       let finalHtmlContent;
@@ -125,6 +126,60 @@ class OrchestratorService extends BaseService {
         throw new Error('Could not extract HTML content from ContentService result');
       }
 
+      // Check if images are needed - if not, skip image generation steps
+      if (!validatedParams.needImages) {
+        this.log('Skipping image generation - needImages is false', 'info', {
+          requestId,
+          needImages: validatedParams.needImages,
+          contentLength: finalHtmlContent.length
+        });
+
+        // Generate image-free output directly
+        const imageFreeFinalHTML = await this.executeStep(
+          'image_free_output',
+          async () => await this.generateImageFreeOutput(finalHtmlContent, validatedParams)
+        );
+
+        // Step 7: Generate additional files (CSS, JS, etc.) - still needed for image-free output
+        await this.executeStep(
+          'additional_files',
+          async () => await this.generateAdditionalFiles(validatedParams.outputDir, validatedParams)
+        );
+
+        const duration = Date.now() - startTime;
+        const result = {
+          success: true,
+          requestId,
+          duration,
+          outputDir: validatedParams.outputDir,
+          htmlFile: imageFreeFinalHTML.filepath,
+          imagesGenerated: 0, // No images generated
+          fileSize: imageFreeFinalHTML.size,
+          formattedSize: imageFreeFinalHTML.formattedSize,
+          metrics: this.metrics.getMetrics(),
+          timestamp: new Date().toISOString(),
+          imagesFree: true // Flag to indicate this was an image-free generation
+        };
+
+        // Record metrics
+        this.metrics.recordRequest({
+          requestId,
+          operation: 'generateSite',
+          duration,
+          success: true
+        });
+
+        this.log(`Image-free site generation completed successfully`, 'info', {
+          requestId,
+          duration,
+          outputDir: result.outputDir,
+          success: result.success,
+          imagesFree: true
+        });
+        return result;
+      }
+
+      // Original image generation workflow for when images are needed
       // Step 4: Parse and generate image prompts
       const { imagePrompts, parsedContent } = await this.executeStep(
         'image_prompt_generation',
@@ -247,6 +302,68 @@ class OrchestratorService extends BaseService {
       this.logError(`Step failed: ${stepName}`, error, { duration: stepDuration });
       throw error;
     }
+  }
+
+  /**
+   * Generate image-free output by saving HTML directly to index.html
+   * @param {string} htmlContent - Generated HTML content
+   * @param {object} params - Generation parameters
+   * @returns {Promise<object>} - Output file information
+   */
+  async generateImageFreeOutput(htmlContent, params) {
+    const fs = require('fs').promises;
+    const path = require('path');
+
+    this.logOperation('Generating image-free output', {
+      outputDir: params.outputDir,
+      contentLength: htmlContent.length
+    });
+
+    try {
+      // Ensure output directory exists
+      await fs.mkdir(params.outputDir, { recursive: true });
+
+      // Save HTML content directly to index.html
+      const htmlFilePath = path.join(params.outputDir, 'index.html');
+      await fs.writeFile(htmlFilePath, htmlContent, 'utf8');
+
+      // Get file stats
+      const stats = await fs.stat(htmlFilePath);
+      const fileSize = stats.size;
+      const formattedSize = this.formatFileSize(fileSize);
+
+      this.logOperation('Image-free output generated successfully', {
+        filepath: htmlFilePath,
+        fileSize,
+        formattedSize
+      });
+
+      return {
+        filepath: htmlFilePath,
+        size: fileSize,
+        formattedSize,
+        content: htmlContent
+      };
+
+    } catch (error) {
+      this.logError('Image-free output generation failed', error, {
+        outputDir: params.outputDir,
+        contentLength: htmlContent.length
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Format file size in human-readable format
+   * @param {number} bytes - File size in bytes
+   * @returns {string} - Formatted size
+   */
+  formatFileSize(bytes) {
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    if (bytes === 0) return '0 Bytes';
+    const i = Math.floor(Math.log(bytes) / Math.log(1024));
+    return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i];
   }
 
   /**

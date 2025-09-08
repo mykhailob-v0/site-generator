@@ -218,6 +218,36 @@ class PromptService extends BaseService {
   }
 
   /**
+   * Get no-images content generation prompt with variables
+   * @param {object} params - Content generation parameters
+   * @returns {Promise<string>} - Processed no-images content generation prompt
+   */
+  async getNoImagesContentGenerationPrompt(params) {
+    this.logOperation('getNoImagesContentGenerationPrompt', { 
+      hasStructure: !!params.structure,
+      hasSTRUCTURE: !!params.STRUCTURE,
+      primaryKeyword: params.primaryKeyword,
+      structureKeys: params.STRUCTURE ? Object.keys(params.STRUCTURE) : (params.structure ? Object.keys(params.structure) : [])
+    });
+
+    // Map variables to the exact format expected by the template (both UPPERCASE and kebab-case)
+    const variables = {
+      PRIMARY_KEYWORD: params.PRIMARY_KEYWORD || params.primaryKeyword || 'bahis',
+      'primary-keyword': params['primary-keyword'] || params.primaryKeyword || 'bahis',
+      SECONDARY_KEYWORDS: params.SECONDARY_KEYWORDS || (Array.isArray(params.secondaryKeywords) ? params.secondaryKeywords.join(', ') : ''),
+      CANONICAL_URL: params.CANONICAL_URL || params.canonicalUrl || 'https://example.com',
+      HREFLANG_URLS: params.HREFLANG_URLS || (typeof params.hreflangUrls === 'object' ? JSON.stringify(params.hreflangUrls) : '{}'),
+      FOCUS_AREAS: params.FOCUS_AREAS || (Array.isArray(params.focusAreas) ? params.focusAreas.join(', ') : 'güvenlik, mobil, destek'),
+      STRUCTURE: params.STRUCTURE || params.structure || {}, // Add STRUCTURE variable mapping for template
+      brandName: params.brandName || 'Bahis Sitesi',
+      structure: params.structure || {}, // Keep for backward compatibility
+      targetLanguage: params.targetLanguage || 'tr'
+    };
+
+    return await this.processPrompt('no-images-content-generation-prompt', variables);
+  }
+
+  /**
    * Get structure generation prompt with variables
    * @param {object} params - Structure generation parameters
    * @returns {Promise<string>} - Processed structure generation prompt

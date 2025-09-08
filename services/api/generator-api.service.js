@@ -260,7 +260,8 @@ class GeneratorAPI {
       outputDir: processedInput.outputDir,
       targetLanguage: processedInput.targetLanguage,
       businessType: processedInput.businessType,
-      logLevel: processedInput.logLevel // Pass through the log level
+      logLevel: processedInput.logLevel, // Pass through the log level
+      needImages: processedInput.needImages || false // Pass through the needImages parameter
     };
   }
 

@@ -136,6 +136,11 @@ class ValidationService extends BaseService {
     // Validate brand name
     enhanced.brandName = this.validateBrandName(params.brandName);
 
+    // Validate needImages parameter
+    if (params.needImages !== undefined) {
+      enhanced.needImages = this.validateNeedImages(params.needImages);
+    }
+
     // Add timestamp and request tracking
     enhanced.validatedAt = new Date().toISOString();
     enhanced.requestId = this.requestId;
@@ -316,6 +321,32 @@ class ValidationService extends BaseService {
     }
 
     return trimmed;
+  }
+
+  /**
+   * Validate needImages parameter
+   * @param {boolean|string} needImages - Need images flag
+   * @returns {boolean} - Validated boolean value
+   */
+  validateNeedImages(needImages) {
+    if (needImages === undefined || needImages === null) {
+      return true; // Default to true if not specified
+    }
+
+    // Handle string values
+    if (typeof needImages === 'string') {
+      const lowercased = needImages.toLowerCase();
+      if (lowercased === 'true') return true;
+      if (lowercased === 'false') return false;
+      throw new ValidationError('needImages must be a boolean value or "true"/"false" string');
+    }
+
+    // Handle boolean values
+    if (typeof needImages === 'boolean') {
+      return needImages;
+    }
+
+    throw new ValidationError('needImages must be a boolean value');
   }
 
   /**

@@ -188,11 +188,15 @@ class ContentService extends AIServiceInterface {
       actualStructure = actualStructure.structure;
     }
     
+    // Select appropriate template based on needImages parameter
+    const templateName = params.needImages ? 'content-generation-prompt' : 'no-images-content-generation-prompt';
+    
     this.logOperation('buildContentPrompt', { 
       primaryKeyword: params.primaryKeyword,
       hasStructure: !!actualStructure,
       structureSections: actualStructure?.sections?.length || 0,
-      usingTemplate: true 
+      usingTemplate: templateName,
+      needImages: params.needImages 
     });
 
     console.log('Structure access debug:', {
@@ -200,11 +204,13 @@ class ContentService extends AIServiceInterface {
       structureKeys: params.structure ? Object.keys(params.structure) : null,
       hasDataStructure: !!(params.structure?.data?.structure),
       hasNestedStructure: !!(params.structure?.data?.structure?.structure),
-      finalSections: actualStructure?.sections?.length || 0
+      finalSections: actualStructure?.sections?.length || 0,
+      templateSelected: templateName,
+      needImages: params.needImages
     });
 
     try {
-      // Use the professional content generation prompt template
+      // Use the appropriate content generation prompt template based on needImages parameter
       // Map variables to the exact format expected by the template (both UPPERCASE and kebab-case placeholders)
       const templateVariables = {
         PRIMARY_KEYWORD: params.primaryKeyword,
@@ -216,13 +222,17 @@ class ContentService extends AIServiceInterface {
         STRUCTURE: JSON.stringify(actualStructure, null, 2) // Add actual structure to template variables
       };
 
-      const prompt = await this.promptService.getContentGenerationPrompt(templateVariables);
+      // Get the appropriate prompt based on needImages parameter
+      const prompt = params.needImages 
+        ? await this.promptService.getContentGenerationPrompt(templateVariables)
+        : await this.promptService.getNoImagesContentGenerationPrompt(templateVariables);
 
       this.logOperation('Content prompt built from template', {
         promptLength: prompt.length,
-        templateUsed: 'content-generation-prompt',
+        templateUsed: templateName,
         structureIncluded: !!templateVariables.STRUCTURE,
-        structureSections: actualStructure?.sections?.length || 0
+        structureSections: actualStructure?.sections?.length || 0,
+        needImages: params.needImages
       });
 
       console.log('Prompt preview:', JSON.stringify(prompt, null, 2));
@@ -230,10 +240,10 @@ class ContentService extends AIServiceInterface {
       return prompt;
 
     } catch (error) {
-      this.logError(error, { operation: 'buildContentPrompt' });
+      this.logError(error, { operation: 'buildContentPrompt', templateName });
       
       // Throw error instead of using fallback - all prompts should come from PromptService
-      throw new Error(`Failed to load content generation prompt: ${error.message}. Ensure prompts/content-generation-prompt.md exists.`);
+      throw new Error(`Failed to load content generation prompt (${templateName}): ${error.message}. Ensure prompts/${templateName}.md exists.`);
     }
   }
 
