@@ -586,8 +586,9 @@ class ContentService extends AIServiceInterface {
    */
   async copyBrandAssets(outputDir, primaryKeyword) {
     try {
-      // Check if this is a Paribahis-related generation
+      // Multi-brand detection system
       const keyword = primaryKeyword.toLowerCase();
+      
       if (keyword.includes('paribahis')) {
         this.logOperation('Copying Paribahis brand assets', {
           outputDir,
@@ -602,27 +603,47 @@ class ContentService extends AIServiceInterface {
         const faviconDest = path.join(outputDir, 'paribahis-favicon-32.png');
         const logoDest = path.join(outputDir, 'paribahis-logo.svg');
         
-        // Copy favicon
-        try {
-          await fs.copyFile(paribahisFavicon, faviconDest);
-          this.logOperation('Paribahis favicon copied', {
-            source: paribahisFavicon,
-            destination: faviconDest
-          });
-        } catch (error) {
-          this.logError(error, { operation: 'Failed to copy Paribahis favicon' });
-        }
+        await this.copyAssetFile(paribahisFavicon, faviconDest, 'Paribahis favicon');
+        await this.copyAssetFile(paribahisLogo, logoDest, 'Paribahis logo');
         
-        // Copy logo
-        try {
-          await fs.copyFile(paribahisLogo, logoDest);
-          this.logOperation('Paribahis logo copied', {
-            source: paribahisLogo,
-            destination: logoDest
-          });
-        } catch (error) {
-          this.logError(error, { operation: 'Failed to copy Paribahis logo' });
-        }
+      } else if (keyword.includes('bettilt')) {
+        this.logOperation('Copying Bettilt brand assets', {
+          outputDir,
+          primaryKeyword
+        });
+        
+        // Source paths for Bettilt assets
+        const bettiltFavicon = path.join('./assets/bettilt/bettilt-favicon-32.png');
+        const bettiltLogo = path.join('./assets/bettilt/bettilt-logo.svg');
+        
+        // Destination paths
+        const faviconDest = path.join(outputDir, 'bettilt-favicon-32.png');
+        const logoDest = path.join(outputDir, 'bettilt-logo.svg');
+        
+        await this.copyAssetFile(bettiltFavicon, faviconDest, 'Bettilt favicon');
+        await this.copyAssetFile(bettiltLogo, logoDest, 'Bettilt logo');
+        
+      } else if (keyword.includes('mostbet')) {
+        this.logOperation('Copying Mostbet brand assets', {
+          outputDir,
+          primaryKeyword
+        });
+        
+        // Source paths for Mostbet assets
+        const mostbetFavicon = path.join('./assets/mostbet/mostbet-favicon.png');
+        const mostbetLogo = path.join('./assets/mostbet/mostbet-logo.png');
+        
+        // Destination paths
+        const faviconDest = path.join(outputDir, 'mostbet-favicon.png');
+        const logoDest = path.join(outputDir, 'mostbet-logo.png');
+        
+        await this.copyAssetFile(mostbetFavicon, faviconDest, 'Mostbet favicon');
+        await this.copyAssetFile(mostbetLogo, logoDest, 'Mostbet logo');
+        
+      } else {
+        this.logOperation('No recognized brand detected, using generated assets', {
+          primaryKeyword
+        });
       }
     } catch (error) {
       this.logError(error, { 
@@ -631,6 +652,24 @@ class ContentService extends AIServiceInterface {
         primaryKeyword
       });
       // Don't throw error - this shouldn't break the main workflow
+    }
+  }
+
+  /**
+   * Helper method to copy individual asset files
+   * @param {string} source - Source file path
+   * @param {string} destination - Destination file path
+   * @param {string} assetName - Name of the asset for logging
+   */
+  async copyAssetFile(source, destination, assetName) {
+    try {
+      await fs.copyFile(source, destination);
+      this.logOperation(`${assetName} copied`, {
+        source,
+        destination
+      });
+    } catch (error) {
+      this.logError(error, { operation: `Failed to copy ${assetName}` });
     }
   }
 

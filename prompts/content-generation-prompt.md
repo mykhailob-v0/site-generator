@@ -154,14 +154,36 @@ Generate JSON-LD schemas based on the sections present in the structure plan:
 - Include relevant properties based on the gambling/betting industry context
 
 ### 6. Brand-Specific Assets
-**PARIBAHIS BRAND DETECTION**:
+**MULTI-BRAND DETECTION SYSTEM**:
+
+**PARIBAHIS BRAND**:
 - If PRIMARY_KEYWORD contains "paribahis" or "Paribahis", use these specific assets:
   - **Favicon**: Use `paribahis-favicon-32.png` instead of generated favicon
   - **Logo**: Use `paribahis-logo.svg` in the header/brand section
   - **Favicon HTML**: `<link rel="icon" type="image/png" href="paribahis-favicon-32.png">`
   - **Logo HTML**: `<img src="paribahis-logo.svg" width="120" height="40" alt="Paribahis Logo">`
 
-**For other brands**: Use the standard generated assets pattern defined in Asset Reference section.
+**BETTILT BRAND**:
+- If PRIMARY_KEYWORD contains "bettilt" or "Bettilt", use these specific assets:
+  - **Favicon**: Use `bettilt-favicon-32.png` instead of generated favicon
+  - **Logo**: Use `bettilt-logo.svg` in the header/brand section
+  - **Favicon HTML**: `<link rel="icon" type="image/png" href="bettilt-favicon-32.png">`
+  - **Logo HTML**: `<img src="bettilt-logo.svg" width="120" height="40" alt="Bettilt Logo">`
+
+**MOSTBET BRAND**:
+- If PRIMARY_KEYWORD contains "mostbet" or "Mostbet", use these specific assets:
+  - **Favicon**: Use `mostbet-favicon.png` instead of generated favicon
+  - **Logo**: Use `mostbet-logo.png` in the header/brand section
+  - **Favicon HTML**: `<link rel="icon" type="image/png" href="mostbet-favicon.png">`
+  - **Logo HTML**: `<img src="mostbet-logo.png" width="120" height="40" alt="Mostbet Logo">`
+
+**BRAND DETECTION LOGIC**:
+- Check PRIMARY_KEYWORD for brand names (case-insensitive)
+- Priority order: Check Paribahis first, then Bettilt, then Mostbet
+- If multiple brands detected, use the first match found
+- If no brand detected, use standard generated assets pattern
+
+**For unrecognized brands**: Use the standard generated assets pattern defined in Asset Reference section.
 
 ### 7. CSS Icons and UI Elements (MANDATORY)
 **USE CSS-BASED ICONS INSTEAD OF IMAGE GENERATION:**
