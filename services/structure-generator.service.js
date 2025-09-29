@@ -15,7 +15,7 @@ class StructureGeneratorService {
     });
     
     this.config = getConfig();
-    this.model = this.config.openai.models.gpt5; // GPT-5
+    this.model = this.config.openai.models.gpt5nano; // GPT-5 Nano
   }
 
   /**
